@@ -59,6 +59,11 @@
         <NamedIndividual IRI="daddy"/>
         <NamedIndividual IRI="mum"/>
     </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="like"/>
+        <NamedIndividual IRI="mum"/>
+        <NamedIndividual IRI="Peter"/>
+    </ObjectPropertyAssertion>
 </Ontology>
 
 

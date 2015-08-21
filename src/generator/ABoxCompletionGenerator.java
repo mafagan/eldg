@@ -157,24 +157,24 @@ public class ABoxCompletionGenerator {
 //			System.out.println(generator.getTboxAxioms()[i]);
 //		}
         
-        Iterator<String> iterator = generator.getIndividualMap().keySet().iterator();
-        while (iterator.hasNext()) {
-        	String key = iterator.next();
-			System.out.println(key + " " + generator.getIndividualMap().get(key));
-		}
-        
-        System.out.println();
-        
-        Iterator<String> iterator2 = generator.getPredicateMap().keySet().iterator();
-        while (iterator2.hasNext()) {
-        	String key = iterator2.next();
-			System.out.print(key + " ");
-			
-			for (int i = 0; i < generator.getPredicateMap().get(key).length; i++) {
-				System.out.print(generator.getPredicateMap().get(key)[i] + " ");
-			}
-			System.out.println();
-		}
+//        Iterator<String> iterator = generator.getIndividualMap().keySet().iterator();
+//        while (iterator.hasNext()) {
+//        	String key = iterator.next();
+//			System.out.println(key + " " + generator.getIndividualMap().get(key));
+//		}
+//        
+//        System.out.println();
+//        
+//        Iterator<String> iterator2 = generator.getPredicateMap().keySet().iterator();
+//        while (iterator2.hasNext()) {
+//        	String key = iterator2.next();
+//			System.out.print(key + " ");
+//			
+//			for (int i = 0; i < generator.getPredicateMap().get(key).length; i++) {
+//				System.out.print(generator.getPredicateMap().get(key)[i] + " ");
+//			}
+//			System.out.println();
+//		}
 	}
 
 	/**
@@ -237,6 +237,24 @@ public class ABoxCompletionGenerator {
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File(fileName));
 		rules.clear();
 		rules.addAll(OWL2Rule.translate(ontology, false, true));
+		
+		/************** add my rule  ********************/
+		
+//		for(OWLAxiom ax:ontology.getAxioms()){
+//			System.out.println(ax);
+//		}
+//		IRI predIri = IRI.create("http://danye.me/like");
+//		Literal head = new Literal(predIri, new String[]{"?X", "?Y", "?Z"});
+//		Literal body1 = new Literal(predIri, new String[]{"?X", "?Y"});
+//		Literal body2 = new Literal(predIri, new String[]{"?Y", "?Z"});
+//		LogicalRule mrule = new LogicalRule();
+//		mrule.head.add(head);
+//		mrule.body.add(body1);
+//		mrule.body.add(body2);
+//		rules.add(mrule);
+		
+		/**********************************/
+
 		removeInvaidRules(rules);
 		System.out.printf("Loaded ontology %s (totally %d logical axioms, translated to %d rules).%n",
 				fileName, ontology.getLogicalAxiomCount(), rules.size());
@@ -835,6 +853,8 @@ public class ABoxCompletionGenerator {
 
 		sqlBuf.append(condBuf.toString());
 		rule.sql = sqlBuf.toString();
+		
+		//System.out.println(sqlBuf);
 	}
 
 	private int make_bind(int x, int t) {
