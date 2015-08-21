@@ -524,7 +524,7 @@ public class ABoxCompletionGenerator {
 	private void processRule(LogicalRule rule, boolean[] orgTrigger, boolean[] newTrigger) throws Exception {
 		Statement stmt = dbConnection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 		TreeSet<int[]> keySet = new TreeSet<int[]>(new IntArrayComparator());
-
+		
 		PrintStream out = new PrintStream(TEMP_FILE);
 		int ps = 0;
 		while (ps < rule.body.size()) {
@@ -854,7 +854,8 @@ public class ABoxCompletionGenerator {
 		sqlBuf.append(condBuf.toString());
 		rule.sql = sqlBuf.toString();
 		
-		//System.out.println(sqlBuf);
+//		System.out.println(rule);
+//		System.out.println(sqlBuf+"\n");
 	}
 
 	private int make_bind(int x, int t) {
