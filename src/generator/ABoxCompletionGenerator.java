@@ -238,24 +238,26 @@ public class ABoxCompletionGenerator {
 		rules.clear();
 		rules.addAll(OWL2Rule.translate(ontology, false, true));
 		
+		
 		/************** add my rule  ********************/
 		
 //		for(OWLAxiom ax:ontology.getAxioms()){
 //			System.out.println(ax);
 //		}
-//		IRI predIri = IRI.create("http://danye.me/like");
-//		Literal head = new Literal(predIri, new String[]{"?X", "?Y", "?Z"});
-//		Literal body1 = new Literal(predIri, new String[]{"?X", "?Y"});
-//		Literal body2 = new Literal(predIri, new String[]{"?Y", "?Z"});
-//		LogicalRule mrule = new LogicalRule();
-//		mrule.head.add(head);
-//		mrule.body.add(body1);
-//		mrule.body.add(body2);
-//		rules.add(mrule);
+		IRI predIri = IRI.create("http://danye.me/like");
+		Literal head = new Literal(predIri, new String[]{"?X", "?Z"});
+		Literal body1 = new Literal(predIri, new String[]{"?X", "?Y"});
+		Literal body2 = new Literal(predIri, new String[]{"?Y", "?Z"});
+		LogicalRule mrule = new LogicalRule();
+		mrule.head.add(head);
+		mrule.body.add(body1);
+		mrule.body.add(body2);
+		rules.add(mrule);
 		
 		/**********************************/
 
 		removeInvaidRules(rules);
+		
 		System.out.printf("Loaded ontology %s (totally %d logical axioms, translated to %d rules).%n",
 				fileName, ontology.getLogicalAxiomCount(), rules.size());
 
@@ -265,19 +267,22 @@ public class ABoxCompletionGenerator {
 		//predMap.put(OWL2Rule.EQUAL_IRI.toString(), new int[] {OWL2Rule.EQUAL_PID, FLAG_SAME_AS});
 		predMap.put(OWL2Rule.NOT_EQUAL_IRI.toString(), new int[] {OWL2Rule.NOT_EQUAL_PID, FLAG_SAME_AS});
 		predMap.put(OWL2Rule.UNIFORM_EQ_IRI.toString(), new int[] {OWL2Rule.EQUAL_PID, FLAG_SAME_AS});
+		
+		
 		initPredicates(ontology, rules);
+		
 		predURIs = new String[predMap.size()];
 		predFlags = new int[predMap.size()];
 		for (Entry<String,int[]> entry: predMap.entrySet()) {
 			predURIs[entry.getValue()[0]-1] = entry.getKey();
 			predFlags[entry.getValue()[0]-1] = entry.getValue()[1];
 		}
-
+		
 		// Setup data for individuals and literals
 		setupIndividuals(ontology);
 		setupLiterals(ontology);
 		manager.removeOntology(ontology);
-
+		
 		// Setup axioms in the TBox
 		Map<OWLAxiom,Integer> axiomMap = new TreeMap<OWLAxiom,Integer>();
 		for (LogicalRule rule: rules)
@@ -389,6 +394,7 @@ public class ABoxCompletionGenerator {
 		//boolean seenDataEqual = false;
 		boolean addedHU = false;
 		for (LogicalRule rule: rules) {
+			//System.out.println(rule + " " + rule.head.get(0).id);
 			// Make the rule safe and add an accessory body item for every equational head atom
 			/*if (rule.head.get(0).id == OWL2Rule.DATA_EQUAL_PID) {
 				seenDataEqual = true;
@@ -402,25 +408,26 @@ public class ABoxCompletionGenerator {
 				atom.id = OWL2Rule.NOT_EQUAL_PID;
 				rule.body.add(atom);
 			}*/
-			if (rule.head.get(0).id != OWL2Rule.EQUAL_PID) {
-				for (int i = 0; i < rule.head.get(0).arguments.length; i++)
-				if (rule.head.get(0).arguments[i].startsWith("?")) {
-					int k = rule.body.size()-1;
-					while (k >= 0 && !rule.body.get(k).arguments[0].equals(rule.head.get(0).arguments[i]))
-						k--;
-					if (k < 0) {
-						addedHU = true;
-						Literal atom = new Literal(HU_IRI, new String[] {rule.head.get(0).arguments[i]});
-						atom.id = HU_PID;
-						rule.body.add(atom);
-					}
-				}
-			}
+//			if (rule.head.get(0).id != OWL2Rule.EQUAL_PID) {
+//				for (int i = 0; i < rule.head.get(0).arguments.length; i++)
+//				if (rule.head.get(0).arguments[i].startsWith("?")) {
+//					int k = rule.body.size()-1;
+//					while (k >= 0 && !rule.body.get(k).arguments[0].equals(rule.head.get(0).arguments[i]))
+//						k--;
+//					if (k < 0) {
+//						addedHU = true;
+//						Literal atom = new Literal(HU_IRI, new String[] {rule.head.get(0).arguments[i]});
+//						atom.id = HU_PID;
+//						rule.body.add(atom);
+//					}
+//				}
+//			}
 			// Replace individuals or literals with numbers  
 			replaceConstants(rule.head);
         	replaceConstants(rule.body);
 		}
 
+		
 		/*
 		// Append rules for axiomatizing equality and compose SQL sentences for all rules
 		String ontologyBase = ontology.getOntologyID().getOntologyIRI().toString();

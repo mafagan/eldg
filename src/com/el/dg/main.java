@@ -1,10 +1,14 @@
 package com.el.dg;
 
+import java.awt.geom.Area;
+import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.semanticweb.owlapi.model.IRI;
 
@@ -22,7 +26,7 @@ public class main {
 	public static final String user = "root";
 	public static final String password = "";
 			
-	public static void main(String[] args) throws SQLException, ClassNotFoundException {
+	public static void main(String[] args) throws SQLException, ClassNotFoundException, FileNotFoundException {
 		// TODO Auto-generated method stub
 //		Class.forName("com.mysql.jdbc.Driver");
 //		Connection dbConnection = DriverManager.getConnection("jdbc:mysql://localhost/test",
@@ -44,9 +48,13 @@ public class main {
 		rule.body.add(body1);
 		rule.body.add(body2);
 		
+		List<LogicalRule> ruleList = new ArrayList<LogicalRule>();
+		ruleList.add(rule);
 		TBoxCP generator = new TBoxCP(url, user, password);
-		generator.addRule(rule);
+		//generator.addRule(rule);
+		generator.setup(ruleList);
 		generator.computeCompletion();
+		generator.createCompletionTable();
 	}
 
 }
