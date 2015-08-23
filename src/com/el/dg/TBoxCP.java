@@ -14,11 +14,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Map.Entry;
 
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
 
+import utils.IntArrayComparator;
 import utils.Literal;
 import utils.LogicalRule;
 import utils.OWL2Rule;
@@ -171,7 +173,25 @@ public class TBoxCP {
 		
 		storeAssertions();
 		
+		stmt.close();
 		
+		// apply rules
+		
+		boolean[] orgTrigger = null;
+		boolean[] newTrigger = new boolean[predFlags.length];
+		int orgNumFacts = 0;
+		while (numAssertions > orgNumFacts) {
+			orgNumFacts = numAssertions;
+			
+		}
+		
+	}
+	
+	private void processRule(LogicalRule rule, boolean[] orgTrigger, boolean[] newTrigger) throws FileNotFoundException, SQLException{
+		Statement stmt = dbConnection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+		TreeSet<int[]> keySet = new TreeSet<int[]>(new IntArrayComparator());
+		
+		PrintStream out = new PrintStream(TEMP_FILE);
 	}
 	
 	private void storeAssertions(){

@@ -408,20 +408,20 @@ public class ABoxCompletionGenerator {
 				atom.id = OWL2Rule.NOT_EQUAL_PID;
 				rule.body.add(atom);
 			}*/
-//			if (rule.head.get(0).id != OWL2Rule.EQUAL_PID) {
-//				for (int i = 0; i < rule.head.get(0).arguments.length; i++)
-//				if (rule.head.get(0).arguments[i].startsWith("?")) {
-//					int k = rule.body.size()-1;
-//					while (k >= 0 && !rule.body.get(k).arguments[0].equals(rule.head.get(0).arguments[i]))
-//						k--;
-//					if (k < 0) {
-//						addedHU = true;
-//						Literal atom = new Literal(HU_IRI, new String[] {rule.head.get(0).arguments[i]});
-//						atom.id = HU_PID;
-//						rule.body.add(atom);
-//					}
-//				}
-//			}
+			if (rule.head.get(0).id != OWL2Rule.EQUAL_PID) {
+				for (int i = 0; i < rule.head.get(0).arguments.length; i++)
+				if (rule.head.get(0).arguments[i].startsWith("?")) {
+					int k = rule.body.size()-1;
+					while (k >= 0 && !rule.body.get(k).arguments[0].equals(rule.head.get(0).arguments[i]))
+						k--;
+					if (k < 0) {
+						addedHU = true;
+						Literal atom = new Literal(HU_IRI, new String[] {rule.head.get(0).arguments[i]});
+						atom.id = HU_PID;
+						rule.body.add(atom);
+					}
+				}
+			}
 			// Replace individuals or literals with numbers  
 			replaceConstants(rule.head);
         	replaceConstants(rule.body);
@@ -437,7 +437,12 @@ public class ABoxCompletionGenerator {
 		*/
 		for (LogicalRule rule: rules)
 			composeSQL(rule);
-
+		
+//		for (LogicalRule logicalRule : rules) {
+//			System.out.println(logicalRule);
+//			System.out.println(logicalRule.sql+"\n");
+//			
+//		}
 		Statement stmt = dbConnection.createStatement();
 
 		// Create the predicate table
@@ -485,7 +490,16 @@ public class ABoxCompletionGenerator {
 		System.out.print("Computing the ABox completion.");
 
 		stmt.close();
-
+		
+//		for (LogicalRule rule: rules){
+//			System.out.println(rule);
+//			System.out.println(rule.sql+"\n");
+//		}
+//		
+		
+		
+		
+		
 		// Compute the least model
 		boolean[] orgTrigger = null;
 		boolean[] newTrigger = new boolean[predFlags.length];
@@ -572,7 +586,7 @@ public class ABoxCompletionGenerator {
 							sqlBuf.append(String.format("b%d.is_new<3", i));
 					}
 				}
-
+				
 				ResultSet rs = stmt.executeQuery(sqlBuf.toString());
 				while (rs.next()) {
 					if (rs.getInt("hid0") == 0) { // probably a new record
@@ -854,6 +868,7 @@ public class ABoxCompletionGenerator {
 				sqlBuf.append(String.format(" and h%d.tnode=b%d.%s", i,
 						bind_atom(v), MAP_BIND[bind_type(v)]));
 			}
+			
 			else
 				sqlBuf.append(String.format("h%d.tnode=%s", i, rule.head.get(i).arguments[1]));
 		}
