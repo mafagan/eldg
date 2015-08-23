@@ -52,9 +52,12 @@ public class main {
 		ruleList.add(rule);
 		TBoxCP generator = new TBoxCP(url, user, password);
 		//generator.addRule(rule);
-		generator.setup(ruleList);
-		generator.computeCompletion();
-		generator.createCompletionTable();
+//		generator.setup(ruleList);
+//		generator.computeCompletion();
+//		generator.createCompletionTable();
+		
+		boolean[] hei = new boolean[5];
+		System.out.println(hei[10]);
 	}
 
 }
