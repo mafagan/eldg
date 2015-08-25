@@ -11,16 +11,34 @@ import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Map.Entry;
 
+
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLOntology;
+
+import de.tudresden.inf.lat.jcel.coreontology.axiom.GCI0Axiom;
+import de.tudresden.inf.lat.jcel.coreontology.axiom.GCI1Axiom;
+import de.tudresden.inf.lat.jcel.coreontology.axiom.GCI2Axiom;
+import de.tudresden.inf.lat.jcel.coreontology.axiom.GCI3Axiom;
+import de.tudresden.inf.lat.jcel.coreontology.axiom.NormalizedIntegerAxiom;
+import de.tudresden.inf.lat.jcel.coreontology.axiom.RI1Axiom;
+import de.tudresden.inf.lat.jcel.coreontology.axiom.RI2Axiom;
+import de.tudresden.inf.lat.jcel.coreontology.axiom.RI3Axiom;
+import de.tudresden.inf.lat.jcel.owlapi.main.JcelReasoner;
+import de.tudresden.inf.lat.jcel.owlapi.translator.TranslationRepository;
+import de.tudresden.inf.lat.jcel.reasoner.main.RuleBasedReasoner;
 
 import utils.IntArrayComparator;
+import utils.LOG;
 import utils.Literal;
 import utils.LogicalRule;
 import utils.OWL2Rule;
@@ -39,9 +57,9 @@ public class TBoxCP {
 			+ "index (is_new))";
 	
 	final private static String ttable = "(id int not null, "
-			+ "fnode int not null, " + "tnode int not null, " + "fonode int not null,"
+			+ "fir_node int not null, " + "sec_node int not null, " + "third_node int not null,"
 			+ "is_new tinyint null, " + "primary key (id), "
-			+ "unique (fnode,tnode,fonode), " + "unique (tnode,fnode), "
+			+ "unique (fir_node,sec_node,third_node), "
 			+ "index (is_new))";
 	
 	final private static String[] MAP_BIND = {"node", "fnode", "tnode", "fonode"};
@@ -53,11 +71,25 @@ public class TBoxCP {
 	final public static int FLAG_TWO_ARG = 1;
 	final public static int FLAG_THREE_ARG = 2;
 	
+	final public static int SC_1 = 1;
+	final public static int SC_2 = 2;
+	final public static int SE_1 = 3;
+	final public static int SE_2 = 4;
+	final public static int SR_1 = 5;
+	final public static int SR_2 = 6;
+	
 	/**************** Discard **************/
 	final public static int FLAG_INTEGER_ROLE = 3;
 	final public static int FLAG_REAL_ROLE = 4;
 	final public static int FLAG_SAME_AS = 5;
 	/**************************************/
+	
+	private OWLOntology ontology;
+	private RuleBasedReasoner ruleBasedReasoner = null;
+	private Set<NormalizedIntegerAxiom> normalizedIntegerAxiomSet = null;
+	private Map<Integer , OWLClass> classMap = null;
+	private Map<Integer, OWLObjectProperty> propMap = null;
+	private Map<Integer, String> predicateMap = null;
 	
 	private Connection dbConnection;
 	private String[] indURIs;
@@ -76,7 +108,7 @@ public class TBoxCP {
 	
 	private ArrayList<LogicalRule> rules;
 	
-	public TBoxCP(String url, String user, String pwd) throws ClassNotFoundException, SQLException{
+	public TBoxCP(String url, String user, String pwd, OWLOntology ontology) throws ClassNotFoundException, SQLException, FileNotFoundException{
 		Class.forName(TBoxCP.driver);
 		dbConnection = DriverManager.getConnection(url, user, pwd);
         dbConnection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
@@ -88,6 +120,56 @@ public class TBoxCP {
         stmt.close();
         if (!dbConnection.getAutoCommit())
 			dbConnection.commit();
+        
+        this.ontology = ontology;
+        
+        initPred();
+        normalize();
+        storeAssertions();
+	}
+	
+	/* map pred and integer */
+	private void initPred(){
+		predicateMap = new HashMap<Integer, String>();
+		predicateMap.put(SC_1, "sc_1");
+		predicateMap.put(SC_2, "sc_2");
+		predicateMap.put(SE_1, "se_1");
+		predicateMap.put(SE_2, "se_2");
+		predicateMap.put(SR_1, "sr_1");
+		predicateMap.put(SR_2, "sr_2");
+	}
+	
+	/* normalize ontology */
+	private void normalize(){
+		JcelReasoner reasoner = new JcelReasoner(ontology, false);
+		ruleBasedReasoner = (RuleBasedReasoner) reasoner.getReasoner();
+		
+		TranslationRepository translatorReposity = reasoner.getTranslator().getTranslationRepository();
+		classMap = translatorReposity.getClassMap();
+		propMap = translatorReposity.getObjectPropertyMap();
+		normalizedIntegerAxiomSet = ruleBasedReasoner.getNormalizedIntegerAxiomSet();
+		
+//		Iterator<NormalizedIntegerAxiom> iterator = normalizedIntegerAxiomSet.iterator(); 
+//		Iterator<Integer> cmIterator = classMap.keySet().iterator();
+//		while (cmIterator.hasNext()) {
+//			Integer nAxiom = (Integer)cmIterator.next();
+//			System.out.println(nAxiom + " " + classMap.get(nAxiom));
+//		}
+//		System.out.println(normalizedIntegerAxiomSet);
+		
+		Iterator<Integer> mapIterator = classMap.keySet().iterator();
+		while(mapIterator.hasNext()){
+			Integer numKey = (Integer) mapIterator.next();
+			LOG.info(numKey + " " + classMap.get(numKey));
+		}
+		
+		mapIterator = propMap.keySet().iterator();
+		
+		while (mapIterator.hasNext()) {
+			Integer numKey = (Integer) mapIterator.next();
+			LOG.info(numKey + " " + propMap.get(numKey));
+
+		}
 	}
 	
 	public void setup(List<LogicalRule> ruleList){
@@ -194,10 +276,109 @@ public class TBoxCP {
 		PrintStream out = new PrintStream(TEMP_FILE);
 	}
 	
-	private void storeAssertions(){
-		ArrayList<int[]>[] assertions = new ArrayList[predFlags.length];
+	private void storeAssertions() throws SQLException, FileNotFoundException{
+		//ArrayList<int[]>[] assertions = new ArrayList[predFlags.length];
+		numAssertions = 0;
 		
-		//TODO store all known TBOX 
+		Statement stmt = dbConnection.createStatement();
+		
+		for(int i=1; i<=6; i++){
+			stmt.execute(String.format("drop table if exists p%d", i));
+			if (i==SC_1 || i==SR_1) {
+				stmt.execute(String.format("create table p%d%s", i, rtable));
+			}else{
+				stmt.execute(String.format("create table p%d%s", i, ttable));
+			}
+		}
+		
+		
+		
+		
+		Iterator<NormalizedIntegerAxiom> norIterator = normalizedIntegerAxiomSet.iterator();
+		while (norIterator.hasNext()) {
+			NormalizedIntegerAxiom axiom = (NormalizedIntegerAxiom) norIterator.next();
+			PrintStream out = new PrintStream(TEMP_FILE);
+			//System.out.println(axiom.getClass());
+			if (axiom instanceof GCI0Axiom) {
+				GCI0Axiom tmpAxiom = (GCI0Axiom) axiom;
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getSuperClass());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SC_1));
+			}else if (axiom instanceof GCI1Axiom) {
+				GCI1Axiom tmpAxiom = (GCI1Axiom) axiom;
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getLeftSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getRightSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getSuperClass());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SC_2));
+
+			}else if (axiom instanceof GCI2Axiom){
+				GCI2Axiom tmpAxiom = (GCI2Axiom) axiom;
+				
+				LOG.info(tmpAxiom);
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getPropertyInSuperClass());
+				out.print("\t");
+				out.print(tmpAxiom.getClassInSuperClass());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SE_1));
+			}else if (axiom instanceof GCI3Axiom) {
+				GCI3Axiom tmpAxiom = (GCI3Axiom) axiom;
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getPropertyInSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getClassInSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getSuperClass());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SE_2));
+			}else if (axiom instanceof RI2Axiom){
+				RI2Axiom tmpAxiom = (RI2Axiom) axiom;
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getSubProperty());
+				out.print("\t");
+				out.print(tmpAxiom.getSuperProperty());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SR_1));
+			}else if (axiom instanceof RI3Axiom){
+				RI3Axiom tmpAxiom = (RI3Axiom) axiom;
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getLeftSubProperty());
+				out.print("\t");
+				out.print(tmpAxiom.getRightSubProperty());
+				out.print("\t");
+				out.print(tmpAxiom.getSuperProperty());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SR_2));
+			}
+			
+			//Ignore RI1Axiom nominal
+			
+			if (!dbConnection.getAutoCommit())
+				dbConnection.commit();
+
+		}
+		stmt.close(); 
 	}
 	
 	public void createCompletionTable() throws SQLException, FileNotFoundException{

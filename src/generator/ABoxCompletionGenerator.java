@@ -43,7 +43,10 @@ import org.semanticweb.owlapi.model.OWLObjectPropertyAssertionAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 
+import com.mysql.jdbc.log.LogUtils;
+
 import utils.IntArrayComparator;
+import utils.LOG;
 import utils.Literal;
 import utils.LogicalRule;
 import utils.OWL2Rule;
@@ -70,6 +73,8 @@ public class ABoxCompletionGenerator {
 		"unique (fnode,tnode), " +
 		"unique (tnode,fnode), " +
 		"index (is_new))";
+	final private static String ONT_FILE = "ont.owl";
+
 	final private static IRI HU_IRI = IRI.create("http://localhost/HU");
 	final private static int HU_PID = -1;
 	final private static String[] MAP_BIND = {"node", "fnode", "tnode"};
@@ -124,10 +129,12 @@ public class ABoxCompletionGenerator {
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-		if (args.length < 2 || args.length > 3) {
-			System.out.println("Usage java generator.ABoxCompletionGenerator <db> <owl file> [-reload]");
-			return;
-		}
+		LOG.flag = true;
+		
+//		if (args.length < 2 || args.length > 3) {
+//			System.out.println("Usage java generator.ABoxCompletionGenerator <db> <owl file> [-reload]");
+//			return;
+//		}
 
 		long st_time = System.currentTimeMillis();
 		Properties props = new Properties();
@@ -136,10 +143,10 @@ public class ABoxCompletionGenerator {
         String dbUser = props.getProperty("user");
         String dbPass = props.getProperty("password");
 		ABoxCompletionGenerator generator = new ABoxCompletionGenerator(
-				"com.mysql.jdbc.Driver", "jdbc:mysql://" + host + "/" + args[0], dbUser, dbPass);
+				"com.mysql.jdbc.Driver", "jdbc:mysql://" + host + "/" + "test", dbUser, dbPass);
 
 		List<LogicalRule> rules = new ArrayList<LogicalRule>();
-		OWLOntology ontology = generator.setupOntology(args[1], rules);
+		OWLOntology ontology = generator.setupOntology(ONT_FILE, rules);
 		if (args.length == 3 && args[2].equalsIgnoreCase("-reload"))
 			generator.restoreCompletion();
 		else
@@ -453,6 +460,7 @@ public class ABoxCompletionGenerator {
 		if (!dbConnection.getAutoCommit())
 			dbConnection.commit();
 		PrintStream out = new PrintStream(TEMP_FILE);
+		//LOG.info(predURIs.length);
 		for (int i = 0; i < predURIs.length; i++) {
 			out.print(i+1);
 			out.print('\t');
@@ -461,8 +469,10 @@ public class ABoxCompletionGenerator {
 			out.println(predURIs[i]);
 		}
 		out.close();
+		
+		/* windows should be \\r\\n */
 		stmt.execute(String.format("load data local infile '%s' ignore into " +
-				"table predicate lines terminated by '\\r\\n'", TEMP_FILE));
+				"table predicate lines terminated by '\\n'", TEMP_FILE));
 		if (!dbConnection.getAutoCommit())
 			dbConnection.commit();
 
@@ -585,7 +595,8 @@ public class ABoxCompletionGenerator {
 						else
 							sqlBuf.append(String.format("b%d.is_new<3", i));
 					}
-				}
+				}				
+
 				
 				ResultSet rs = stmt.executeQuery(sqlBuf.toString());
 				while (rs.next()) {
@@ -876,8 +887,9 @@ public class ABoxCompletionGenerator {
 		sqlBuf.append(condBuf.toString());
 		rule.sql = sqlBuf.toString();
 		
-//		System.out.println(rule);
-//		System.out.println(sqlBuf+"\n");
+		LOG.info(rule.toString());
+		LOG.info(sqlBuf+"\n");
+		
 	}
 
 	private int make_bind(int x, int t) {
