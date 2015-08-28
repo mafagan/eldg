@@ -70,14 +70,40 @@ public class TBoxCP {
 	final public static int FLAG_ONE_ARG = 0;
 	final public static int FLAG_TWO_ARG = 1;
 	final public static int FLAG_THREE_ARG = 2;
-	
+
+	/* A ⊑ B */
 	final public static int SC_1 = 1;
+
+	/* A1 ⊓ A2 ⊑ B */
 	final public static int SC_2 = 2;
+
+	/* A ⊑ ∃r.B */
 	final public static int SE_1 = 3;
+
+	/* ∃r.A ⊑ B */
 	final public static int SE_2 = 4;
+
+	/* r ⊑ s */
 	final public static int SR_1 = 5;
+
+	/* r ∘ s ⊑ t */
 	final public static int SR_2 = 6;
-	
+
+	final public static int CR_SIZE = 12;
+
+	final public static int CR_1 = 1;
+	final public static int CR_2 = 2;
+	final public static int CR_3 = 3;
+	final public static int CR_4 = 4;
+	final public static int CR_5 = 5;
+	final public static int CR_6 = 6;
+	final public static int CR_7 = 7;
+	final public static int CR_8 = 8;
+	final public static int CR_9 = 9;
+	final public static int CR_10 = 10;
+	final public static int CR_11 = 11;
+	final public static int CR_12 = 12;
+
 	/**************** Discard **************/
 	final public static int FLAG_INTEGER_ROLE = 3;
 	final public static int FLAG_REAL_ROLE = 4;
@@ -123,11 +149,30 @@ public class TBoxCP {
         
         this.ontology = ontology;
         
-        initPred();
-        normalize();
-        storeAssertions();
+
 	}
-	
+
+	public void generate() throws FileNotFoundException, SQLException {
+		initPred();
+
+		normalize();
+
+		storeAssertions();
+
+		generateEntailment();
+	}
+
+	private void generateEntailment() throws FileNotFoundException, SQLException {
+		int oldAssertion = 0;
+
+		while (numAssertions>oldAssertion){
+			oldAssertion = numAssertions;
+
+			for (int i=0; i<CR_SIZE; i++)
+				processRule(i);
+		}
+	}
+
 	/* map pred and integer */
 	private void initPred(){
 		predicateMap = new HashMap<Integer, String>();
@@ -269,11 +314,37 @@ public class TBoxCP {
 		
 	}
 	
-	private void processRule(LogicalRule rule, boolean[] orgTrigger, boolean[] newTrigger) throws FileNotFoundException, SQLException{
+	private void processRule(int ruleID) throws FileNotFoundException, SQLException{
 		Statement stmt = dbConnection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 		TreeSet<int[]> keySet = new TreeSet<int[]>(new IntArrayComparator());
 		
 		PrintStream out = new PrintStream(TEMP_FILE);
+
+
+		ResultSet rs = stmt.executeQuery(SQLStmt.rules[ruleID]);
+		while (rs.next()){
+			if (rs.getInt("h0") == 0){
+				int[] key = new int[rs.getMetaData().getColumnCount()-1];
+				for (int i=0; i<key.length; i++){
+					key[i] = rs.getInt(i+1);
+				}
+
+				if (!keySet.contains(key)){
+					keySet.add(key);
+
+					out.print(++numAssertions);
+					for (int i=0; i<key.length; i++){
+						out.print("\t");
+						out.print(key);
+					}
+					out.println("\t");
+				}
+			}
+		}
+		rs.close();
+		out.close();
+
+		//TODO write back to database
 	}
 	
 	private void storeAssertions() throws SQLException, FileNotFoundException{
@@ -297,6 +368,7 @@ public class TBoxCP {
 		Iterator<NormalizedIntegerAxiom> norIterator = normalizedIntegerAxiomSet.iterator();
 		while (norIterator.hasNext()) {
 			NormalizedIntegerAxiom axiom = (NormalizedIntegerAxiom) norIterator.next();
+			LOG.info(axiom.toString());
 			PrintStream out = new PrintStream(TEMP_FILE);
 			//System.out.println(axiom.getClass());
 			if (axiom instanceof GCI0Axiom) {
@@ -325,7 +397,6 @@ public class TBoxCP {
 			}else if (axiom instanceof GCI2Axiom){
 				GCI2Axiom tmpAxiom = (GCI2Axiom) axiom;
 				
-				LOG.info(tmpAxiom);
 				out.print(++numAssertions);
 				out.print("\t");
 				out.print(tmpAxiom.getSubClass());
@@ -433,7 +504,8 @@ public class TBoxCP {
 					dbConnection.commit();
 			}
 	}
-	
+
+	/* Discard */
 	private void composeSQL(LogicalRule rule){
 		StringBuffer sqlBuf = new StringBuffer();
 		StringBuffer condBuf = new StringBuffer();

@@ -25,10 +25,16 @@
         <Class IRI="Animal"/>
     </Declaration>
     <Declaration>
+        <Class IRI="Ladyboy"/>
+    </Declaration>
+    <Declaration>
         <Class IRI="Men"/>
     </Declaration>
     <Declaration>
         <Class IRI="Person"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="Woman"/>
     </Declaration>
     <Declaration>
         <ObjectProperty IRI="like"/>
@@ -43,12 +49,37 @@
         <NamedIndividual IRI="mum"/>
     </Declaration>
     <SubClassOf>
+        <Class IRI="Ladyboy"/>
+        <Class IRI="Person"/>
+    </SubClassOf>
+    <SubClassOf>
         <Class IRI="Men"/>
         <Class IRI="Person"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="Person"/>
         <Class IRI="Animal"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="Woman"/>
+        <Class IRI="Person"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="Woman"/>
+        <ObjectSomeValuesFrom>
+            <ObjectProperty IRI="like"/>
+            <Class IRI="Men"/>
+        </ObjectSomeValuesFrom>
+    </SubClassOf>
+    <SubClassOf>
+        <ObjectIntersectionOf>
+            <Class IRI="Men"/>
+            <Class IRI="Woman"/>
+        </ObjectIntersectionOf>
+        <ObjectSomeValuesFrom>
+            <ObjectProperty IRI="like"/>
+            <Class IRI="Ladyboy"/>
+        </ObjectSomeValuesFrom>
     </SubClassOf>
     <ClassAssertion>
         <Class IRI="Men"/>
