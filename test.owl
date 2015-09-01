@@ -41,13 +41,6 @@
         <Class IRI="#C"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="#B"/>
-        <ObjectIntersectionOf>
-            <Class IRI="#C"/>
-            <Class IRI="#D"/>
-        </ObjectIntersectionOf>
-    </SubClassOf>
-    <SubClassOf>
         <ObjectIntersectionOf>
             <Class IRI="#B"/>
             <Class IRI="#C"/>

@@ -19,4 +19,5 @@ public class SQLStmt {
 
     public static String[] rules = {CR_1, CR_2, CR_3, CR_4, CR_5, CR_6, CR_7, CR_8, CR_9, CR_10, CR_11, CR_12};
     public static int[] entailmentPNum = {1, 4, 3, 1, 4, 1, 3, 3, 5, 6, 6, 6};
+
 }
