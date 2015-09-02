@@ -9,10 +9,16 @@ import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import sun.dc.path.PathError;
+import sun.tools.jconsole.MaximizableInternalFrame;
 import utils.LOG;
 
+import java.io.FileNotFoundException;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.SelectableChannel;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 
 /**
@@ -32,6 +38,13 @@ public class PatternGeneration {
 
     private Map<Set<Set<NormalizedIntegerAxiom>>, PatternInfo> infoMap;
 
+    public static final String url = "jdbc:mysql://localhost/eldg";
+    public static final String user = "root";
+    public static final String password = "1";
+    public static final String driver = "com.mysql.jdbc.Driver";
+
+    private Connection dbConnection;
+
     final public static Map<String, Integer> axiomTypeMap = new HashMap<String, Integer>(){{
             put(GCI0Axiom.class.toString(), 1);
             put(GCI1Axiom.class.toString(), 2);
@@ -50,12 +63,23 @@ public class PatternGeneration {
         add("third_node");
     }};
 
-    public PatternGeneration(OWLOntology ont){
+    public PatternGeneration(OWLOntology ont) throws SQLException {
+        dbConnection = DriverManager.getConnection(url, user, password);
+        dbConnection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+        Statement stmt = dbConnection.createStatement();
+        stmt.execute("set session read_buffer_size=41943040"); // 40M
+        stmt.execute("set session read_rnd_buffer_size=41943040"); // 40M
+        stmt.execute("set session sort_buffer_size=167772160"); // 160M
+        stmt.execute("set session join_buffer_size=167772160"); // 160M
+        stmt.close();
+        if (!dbConnection.getAutoCommit())
+            dbConnection.commit();
+
         ontology = ont;
 
     }
 
-    public void doGenerate(){
+    public void doGenerate() throws FileNotFoundException, SQLException, ClassNotFoundException {
         doPretreatment();
 
 
@@ -76,18 +100,18 @@ public class PatternGeneration {
             if (findSubstitution(g, true)){
                 addPattern(S_a, g);
 
-                Iterator<NormalizedIntegerAxiom> gIterator = g.iterator();
+//                Iterator<NormalizedIntegerAxiom> gIterator = g.iterator();
+//
+//                while (gIterator.hasNext()){
+//                    NormalizedIntegerAxiom axiom = gIterator.next();
 
-                while (gIterator.hasNext()){
-                    NormalizedIntegerAxiom axiom = gIterator.next();
+                Set<Set<NormalizedIntegerAxiom>> candidatePattern = getCandidatePattern(g);
 
-                    Set<Set<NormalizedIntegerAxiom>> candidatePattern = getCandidatePattern(g, axiom);
+                Iterator<Set<NormalizedIntegerAxiom>> candiIterator = candidatePattern.iterator();
 
-                    Iterator<Set<NormalizedIntegerAxiom>> candiIterator = candidatePattern.iterator();
+                while (candiIterator.hasNext())
+                    addPattern(S_a, candiIterator.next());
 
-                    while (candiIterator.hasNext())
-                        addPattern(S_a, candiIterator.next());
-                }
             }
 
 
@@ -121,9 +145,97 @@ public class PatternGeneration {
 
         return res;
     }
-    private Set<Set<NormalizedIntegerAxiom>> getCandidatePattern(Set<NormalizedIntegerAxiom> gSet, NormalizedIntegerAxiom axiom){
-        //TODO
+
+    private Set<Set<NormalizedIntegerAxiom>> getCandidatePattern(Set<NormalizedIntegerAxiom> gSet){
+        Set<Integer> signature = getSignature(gSet);
+        Iterator<Integer> integerIterator = signature.iterator();
+        int max = 0;
+        while (integerIterator.hasNext()){
+            Integer tmp = integerIterator.next();
+
+            if (tmp > max)
+                max = tmp;
+        }
+
+        Set<Set<NormalizedIntegerAxiom>> candidateSet = new HashSet<Set<NormalizedIntegerAxiom>>();
+        Iterator<NormalizedIntegerAxiom> nit = gSet.iterator();
+
+        while (nit.hasNext()){
+            NormalizedIntegerAxiom tmpAxiom = nit.next();
+
+            Integer axiomType = PatternGeneration.axiomTypeMap.get(tmpAxiom.getClass().toString());
+
+            if (axiomType != PatternGeneration.axiomTypeMap.get(GCI0Axiom.class.toString())
+                    && axiomType != PatternGeneration.axiomTypeMap.get(GCI2Axiom.class.toString()))
+                continue;
+            else{
+                Set<Set<NormalizedIntegerAxiom>> bodyPart = getRuleBody(tmpAxiom, max);
+                //TODO create new pattern
+            }
+
+
+        }
+
         return null;
+    }
+
+    /* replace rule.head with rule.body */
+    private Set<Set<NormalizedIntegerAxiom>> getRuleBody(NormalizedIntegerAxiom axiom,  int maxId){
+        NormalizedIntegerAxiomFactoryImpl fat = new NormalizedIntegerAxiomFactoryImpl();
+        Set<Set<NormalizedIntegerAxiom>> bodyPart = new HashSet<Set<NormalizedIntegerAxiom>>();
+
+        if (axiom instanceof GCI0Axiom){
+            GCI0Axiom tmpAxiom = (GCI0Axiom) axiom;
+
+            Set<NormalizedIntegerAxiom> cp1 = new HashSet<NormalizedIntegerAxiom>();
+            cp1.add(fat.createGCI0Axiom(tmpAxiom.getSubClass(), maxId+1));
+            cp1.add(fat.createGCI0Axiom(maxId+1, tmpAxiom.getSuperClass()));
+            bodyPart.add(cp1);
+
+            Set<NormalizedIntegerAxiom> cp2 = new HashSet<NormalizedIntegerAxiom>();
+            cp2.add(fat.createGCI0Axiom(tmpAxiom.getSubClass(), maxId+1));
+            cp2.add(fat.createGCI0Axiom(tmpAxiom.getSubClass(), maxId + 2));
+            cp2.add(fat.createGCI1Axiom(maxId + 1, maxId + 2, tmpAxiom.getSuperClass()));
+            bodyPart.add(cp2);
+
+            Set<NormalizedIntegerAxiom> cp3 = new HashSet<NormalizedIntegerAxiom>();
+            cp3.add(fat.createGCI0Axiom(tmpAxiom.getSubClass(), maxId + 1));
+            cp3.add(fat.createGCI1Axiom(tmpAxiom.getSubClass(), maxId + 1, tmpAxiom.getSuperClass()));
+            bodyPart.add(cp3);
+
+            Set<NormalizedIntegerAxiom> cp4 = new HashSet<NormalizedIntegerAxiom>();
+            cp4.add(fat.createGCI0Axiom(tmpAxiom.getSubClass(), maxId + 1));
+            cp4.add(fat.createGCI1Axiom(maxId + 1, tmpAxiom.getSubClass(), tmpAxiom.getSuperClass()));
+            bodyPart.add(cp4);
+
+            Set<NormalizedIntegerAxiom> cp5 = new HashSet<NormalizedIntegerAxiom>();
+            cp5.add(fat.createGCI2Axiom(tmpAxiom.getSubClass(), maxId + 1, maxId + 2));
+            cp5.add(fat.createGCI0Axiom(maxId + 2, maxId + 3));
+            cp5.add(fat.createGCI3Axiom(maxId + 1, maxId + 3, tmpAxiom.getSubClass()));
+            bodyPart.add(cp5);
+
+            Set<NormalizedIntegerAxiom> cp6 = new HashSet<NormalizedIntegerAxiom>();
+            cp6.add(fat.createGCI2Axiom(tmpAxiom.getSubClass(), maxId+1, maxId+2));
+            cp6.add(fat.createGCI3Axiom(maxId+1, maxId+2, tmpAxiom.getSuperClass()));
+            bodyPart.add(cp6);
+
+        }else{
+            GCI2Axiom tmpAxiom = (GCI2Axiom) axiom;
+
+            Set<NormalizedIntegerAxiom> cp7 = new HashSet<NormalizedIntegerAxiom>();
+            cp7.add(fat.createGCI2Axiom(tmpAxiom.getSubClass(), maxId + 1, tmpAxiom.getClassInSuperClass()));
+            cp7.add(fat.createRI2Axiom(maxId + 1, tmpAxiom.getPropertyInSuperClass()));
+            bodyPart.add(cp7);
+
+            Set<NormalizedIntegerAxiom> cp8 = new HashSet<NormalizedIntegerAxiom>();
+            cp8.add(fat.createGCI2Axiom(tmpAxiom.getSubClass(), maxId+1, maxId+2));
+            cp8.add(fat.createGCI2Axiom(maxId+2, maxId+3, tmpAxiom.getClassInSuperClass()));
+            cp8.add(fat.createRI3Axiom(maxId+1, maxId+3, tmpAxiom.getPropertyInSuperClass()));
+            bodyPart.add(cp8);
+
+        }
+
+        return bodyPart;
     }
 
     private void addPattern(Set<Set<NormalizedIntegerAxiom>> patternSet, Set<NormalizedIntegerAxiom> pattern){
@@ -139,7 +251,7 @@ public class PatternGeneration {
 
     /* normalize and get class, property map*/
 
-    private void doPretreatment(){
+    private void doPretreatment() throws FileNotFoundException, SQLException, ClassNotFoundException {
         JcelReasoner reasoner = new JcelReasoner(ontology, false);
         RuleBasedReasoner ruleBasedReasoner = (RuleBasedReasoner) reasoner.getReasoner();
 
@@ -147,6 +259,9 @@ public class PatternGeneration {
         classMap = translatorReposity.getClassMap();
         propMap = translatorReposity.getObjectPropertyMap();
         tbox = ruleBasedReasoner.getNormalizedIntegerAxiomSet();
+
+        TBoxCP tcp = new TBoxCP(dbConnection, tbox);
+        tcp.generate();
     }
 
     public Set<NormalizedIntegerAxiom> a_patternInSetDifference(Set<Set<NormalizedIntegerAxiom>> Sa, Set<Set<NormalizedIntegerAxiom>> Sv){
@@ -229,8 +344,7 @@ public class PatternGeneration {
             if (index == 0){
                 sqlstmt += tableStr + " " + tmpTableStr + " ";
             }else{
-                String joinStmt = null;
-                joinStmt = "inner join ";
+                String joinStmt = "inner join ";
                 sqlstmt += joinStmt + tableStr + " " + tmpTableStr + " on ";
 
                 for (int i = 0; i<iris.length; i++){
@@ -241,37 +355,43 @@ public class PatternGeneration {
 
                         //TODO add column name
 
-                        String eqRight = tmpTableStr + " ";
+                        String eqRight = tmpTableStr + "." + PatternGeneration.columnName.get((iris.length-2)*3+i) + " ";
 
                         if (i != 0)
-                            sqlstmt += "and " + eqLeft + eqRight;
-                        else
-                            sqlstmt += eqLeft + eqRight;
+                            sqlstmt += "and ";
+
+                        sqlstmt += eqLeft + eqRight + " ";
 
                         if (PatternGeneration.axiomTypeMap.get(tmpAxiom.getClass().toString())
-                                == info.axiomType){
-                            sqlstmt += "h"
+                                == info.axiomType && index != info.index){
+                            sqlstmt += "and " + "h" + index + ".id<>" + info.index + ".id ";
                         }
 
 
+                    }else{
+                        /* store the first */
+                        equalMap.put(iris[i], new IDInfo(PatternGeneration.columnName.get((iris.length-2)*3+i), index,
+                                PatternGeneration.axiomTypeMap.get(tmpAxiom.getClass().toString())));
                     }
                 }
 
-            }
 
 
-            for (int i = 0; i<iris.length; i++){
-                if (!equalMap.keySet().contains(iris[i])){
 
-                    /* store the first */
-                    equalMap.put(iris[i], new IDInfo(PatternGeneration.columnName.get((iris.length-2)*3+i), index,
-                            PatternGeneration.axiomTypeMap.get(tmpAxiom.getClass().toString())));
-                }
+//            for (int i = 0; i<iris.length; i++){
+//                if (!equalMap.keySet().contains(iris[i])){
+//
+//                    /* store the first */
+//                    equalMap.put(iris[i], new IDInfo(PatternGeneration.columnName.get((iris.length-2)*3+i), index,
+//                            PatternGeneration.axiomTypeMap.get(tmpAxiom.getClass().toString())));
+//                }
             }
 
             prevAxiom = tmpAxiom;
             index++;
         }
+
+        return sqlstmt;
     }
 
     private String getColumnName(Integer length, Integer index){

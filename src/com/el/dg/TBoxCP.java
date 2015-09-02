@@ -134,32 +134,20 @@ public class TBoxCP {
 	
 	private ArrayList<LogicalRule> rules;
 	
-	public TBoxCP(String url, String user, String pwd, OWLOntology ontology) throws ClassNotFoundException, SQLException, FileNotFoundException{
-		Class.forName(TBoxCP.driver);
-		dbConnection = DriverManager.getConnection(url, user, pwd);
-        dbConnection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-        Statement stmt = dbConnection.createStatement();
-        stmt.execute("set session read_buffer_size=41943040"); // 40M
-        stmt.execute("set session read_rnd_buffer_size=41943040"); // 40M
-        stmt.execute("set session sort_buffer_size=167772160"); // 160M
-        stmt.execute("set session join_buffer_size=167772160"); // 160M
-        stmt.close();
-        if (!dbConnection.getAutoCommit())
-			dbConnection.commit();
-        
-        this.ontology = ontology;
-        
-
+	public TBoxCP(Connection connection, Set<NormalizedIntegerAxiom> norAxiomSet) throws ClassNotFoundException, SQLException, FileNotFoundException{
+		dbConnection = connection;
+        normalizedIntegerAxiomSet = norAxiomSet;
 	}
 
 	public void generate() throws FileNotFoundException, SQLException {
-		initPred();
+//		initPred();
 
-		normalize();
+//		normalize();
 
 		storeAssertions();
 
 		generateEntailment();
+
 	}
 
 	private void generateEntailment() throws FileNotFoundException, SQLException {
@@ -171,6 +159,144 @@ public class TBoxCP {
 			for (int i=0; i<CR_SIZE; i++)
 				processRule(i);
 		}
+	}
+
+	private void processRule(int ruleID) throws FileNotFoundException, SQLException{
+		Statement stmt = dbConnection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+		TreeSet<int[]> keySet = new TreeSet<int[]>(new IntArrayComparator());
+
+		PrintStream out = new PrintStream(TEMP_FILE);
+
+
+		ResultSet rs = stmt.executeQuery(SQLStmt.rules[ruleID]);
+		while (rs.next()){
+			if (rs.getInt("h0") == 0){
+				int[] key = new int[rs.getMetaData().getColumnCount()-1];
+				for (int i=0; i<key.length; i++){
+					key[i] = rs.getInt(i+1);
+				}
+
+				if (!keySet.contains(key)){
+					keySet.add(key);
+
+					out.print(++numAssertions);
+					for (int i=0; i<key.length; i++){
+						out.print("\t");
+						out.print(key);
+					}
+					out.println("\t");
+				}
+			}
+		}
+		rs.close();
+		out.close();
+
+		//TODO write back to database
+	}
+
+	private void storeAssertions() throws SQLException, FileNotFoundException{
+		//ArrayList<int[]>[] assertions = new ArrayList[predFlags.length];
+		numAssertions = 0;
+
+		Statement stmt = dbConnection.createStatement();
+
+		for(int i=1; i<=6; i++){
+			stmt.execute(String.format("drop table if exists p%d", i));
+			if (i==SC_1 || i==SR_1) {
+				stmt.execute(String.format("create table p%d%s", i, rtable));
+			}else{
+				stmt.execute(String.format("create table p%d%s", i, ttable));
+			}
+		}
+
+
+
+
+		Iterator<NormalizedIntegerAxiom> norIterator = normalizedIntegerAxiomSet.iterator();
+		while (norIterator.hasNext()) {
+			NormalizedIntegerAxiom axiom = (NormalizedIntegerAxiom) norIterator.next();
+			LOG.info(axiom.toString());
+			PrintStream out = new PrintStream(TEMP_FILE);
+			//System.out.println(axiom.getClass());
+			if (axiom instanceof GCI0Axiom) {
+				GCI0Axiom tmpAxiom = (GCI0Axiom) axiom;
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getSuperClass());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SC_1));
+			}else if (axiom instanceof GCI1Axiom) {
+				GCI1Axiom tmpAxiom = (GCI1Axiom) axiom;
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getLeftSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getRightSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getSuperClass());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SC_2));
+
+			}else if (axiom instanceof GCI2Axiom){
+				GCI2Axiom tmpAxiom = (GCI2Axiom) axiom;
+
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getPropertyInSuperClass());
+				out.print("\t");
+				out.print(tmpAxiom.getClassInSuperClass());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SE_1));
+			}else if (axiom instanceof GCI3Axiom) {
+				GCI3Axiom tmpAxiom = (GCI3Axiom) axiom;
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getPropertyInSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getClassInSubClass());
+				out.print("\t");
+				out.print(tmpAxiom.getSuperClass());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SE_2));
+			}else if (axiom instanceof RI2Axiom){
+				RI2Axiom tmpAxiom = (RI2Axiom) axiom;
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getSubProperty());
+				out.print("\t");
+				out.print(tmpAxiom.getSuperProperty());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SR_1));
+			}else if (axiom instanceof RI3Axiom){
+				RI3Axiom tmpAxiom = (RI3Axiom) axiom;
+				out.print(++numAssertions);
+				out.print("\t");
+				out.print(tmpAxiom.getLeftSubProperty());
+				out.print("\t");
+				out.print(tmpAxiom.getRightSubProperty());
+				out.print("\t");
+				out.print(tmpAxiom.getSuperProperty());
+				out.print("\t0\n");
+				out.close();
+				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SR_2));
+			}
+
+			//Ignore RI1Axiom nominal
+
+			if (!dbConnection.getAutoCommit())
+				dbConnection.commit();
+
+		}
+		stmt.close();
 	}
 
 	/* map pred and integer */
@@ -314,143 +440,8 @@ public class TBoxCP {
 		
 	}
 	
-	private void processRule(int ruleID) throws FileNotFoundException, SQLException{
-		Statement stmt = dbConnection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-		TreeSet<int[]> keySet = new TreeSet<int[]>(new IntArrayComparator());
-		
-		PrintStream out = new PrintStream(TEMP_FILE);
 
 
-		ResultSet rs = stmt.executeQuery(SQLStmt.rules[ruleID]);
-		while (rs.next()){
-			if (rs.getInt("h0") == 0){
-				int[] key = new int[rs.getMetaData().getColumnCount()-1];
-				for (int i=0; i<key.length; i++){
-					key[i] = rs.getInt(i+1);
-				}
-
-				if (!keySet.contains(key)){
-					keySet.add(key);
-
-					out.print(++numAssertions);
-					for (int i=0; i<key.length; i++){
-						out.print("\t");
-						out.print(key);
-					}
-					out.println("\t");
-				}
-			}
-		}
-		rs.close();
-		out.close();
-
-		//TODO write back to database
-	}
-	
-	private void storeAssertions() throws SQLException, FileNotFoundException{
-		//ArrayList<int[]>[] assertions = new ArrayList[predFlags.length];
-		numAssertions = 0;
-		
-		Statement stmt = dbConnection.createStatement();
-		
-		for(int i=1; i<=6; i++){
-			stmt.execute(String.format("drop table if exists p%d", i));
-			if (i==SC_1 || i==SR_1) {
-				stmt.execute(String.format("create table p%d%s", i, rtable));
-			}else{
-				stmt.execute(String.format("create table p%d%s", i, ttable));
-			}
-		}
-		
-		
-		
-		
-		Iterator<NormalizedIntegerAxiom> norIterator = normalizedIntegerAxiomSet.iterator();
-		while (norIterator.hasNext()) {
-			NormalizedIntegerAxiom axiom = (NormalizedIntegerAxiom) norIterator.next();
-			LOG.info(axiom.toString());
-			PrintStream out = new PrintStream(TEMP_FILE);
-			//System.out.println(axiom.getClass());
-			if (axiom instanceof GCI0Axiom) {
-				GCI0Axiom tmpAxiom = (GCI0Axiom) axiom;
-				out.print(++numAssertions);
-				out.print("\t");
-				out.print(tmpAxiom.getSubClass());
-				out.print("\t");
-				out.print(tmpAxiom.getSuperClass());
-				out.print("\t0\n");
-				out.close();
-				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SC_1));
-			}else if (axiom instanceof GCI1Axiom) {
-				GCI1Axiom tmpAxiom = (GCI1Axiom) axiom;
-				out.print(++numAssertions);
-				out.print("\t");
-				out.print(tmpAxiom.getLeftSubClass());
-				out.print("\t");
-				out.print(tmpAxiom.getRightSubClass());
-				out.print("\t");
-				out.print(tmpAxiom.getSuperClass());
-				out.print("\t0\n");
-				out.close();
-				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SC_2));
-
-			}else if (axiom instanceof GCI2Axiom){
-				GCI2Axiom tmpAxiom = (GCI2Axiom) axiom;
-				
-				out.print(++numAssertions);
-				out.print("\t");
-				out.print(tmpAxiom.getSubClass());
-				out.print("\t");
-				out.print(tmpAxiom.getPropertyInSuperClass());
-				out.print("\t");
-				out.print(tmpAxiom.getClassInSuperClass());
-				out.print("\t0\n");
-				out.close();
-				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SE_1));
-			}else if (axiom instanceof GCI3Axiom) {
-				GCI3Axiom tmpAxiom = (GCI3Axiom) axiom;
-				out.print(++numAssertions);
-				out.print("\t");
-				out.print(tmpAxiom.getPropertyInSubClass());
-				out.print("\t");
-				out.print(tmpAxiom.getClassInSubClass());
-				out.print("\t");
-				out.print(tmpAxiom.getSuperClass());
-				out.print("\t0\n");
-				out.close();
-				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SE_2));
-			}else if (axiom instanceof RI2Axiom){
-				RI2Axiom tmpAxiom = (RI2Axiom) axiom;
-				out.print(++numAssertions);
-				out.print("\t");
-				out.print(tmpAxiom.getSubProperty());
-				out.print("\t");
-				out.print(tmpAxiom.getSuperProperty());
-				out.print("\t0\n");
-				out.close();
-				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SR_1));
-			}else if (axiom instanceof RI3Axiom){
-				RI3Axiom tmpAxiom = (RI3Axiom) axiom;
-				out.print(++numAssertions);
-				out.print("\t");
-				out.print(tmpAxiom.getLeftSubProperty());
-				out.print("\t");
-				out.print(tmpAxiom.getRightSubProperty());
-				out.print("\t");
-				out.print(tmpAxiom.getSuperProperty());
-				out.print("\t0\n");
-				out.close();
-				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SR_2));
-			}
-			
-			//Ignore RI1Axiom nominal
-			
-			if (!dbConnection.getAutoCommit())
-				dbConnection.commit();
-
-		}
-		stmt.close(); 
-	}
 	
 	public void createCompletionTable() throws SQLException, FileNotFoundException{
 		Statement stmt = dbConnection.createStatement();
@@ -592,6 +583,7 @@ public class TBoxCP {
 			}
 		}
 	}
+
 	public void addRule(LogicalRule rule){
 		rules.add(rule);
 	}
