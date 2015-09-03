@@ -89,7 +89,7 @@ public class TBoxCP {
 	/* r ∘ s ⊑ t */
 	final public static int SR_2 = 6;
 
-	final public static int CR_SIZE = 12;
+	final public static int CR_SIZE = 8;
 
 	final public static int CR_1 = 1;
 	final public static int CR_2 = 2;
@@ -99,10 +99,7 @@ public class TBoxCP {
 	final public static int CR_6 = 6;
 	final public static int CR_7 = 7;
 	final public static int CR_8 = 8;
-	final public static int CR_9 = 9;
-	final public static int CR_10 = 10;
-	final public static int CR_11 = 11;
-	final public static int CR_12 = 12;
+
 
 	/**************** Discard **************/
 	final public static int FLAG_INTEGER_ROLE = 3;
@@ -170,7 +167,7 @@ public class TBoxCP {
 
 		ResultSet rs = stmt.executeQuery(SQLStmt.rules[ruleID]);
 		while (rs.next()){
-			if (rs.getInt("h0") == 0){
+			if (rs.getInt("id") == 0){
 				int[] key = new int[rs.getMetaData().getColumnCount()-1];
 				for (int i=0; i<key.length; i++){
 					key[i] = rs.getInt(i+1);
@@ -180,11 +177,12 @@ public class TBoxCP {
 					keySet.add(key);
 
 					out.print(++numAssertions);
-					for (int i=0; i<key.length; i++){
+					for (int i=0; i<key.length-1; i++){
 						out.print("\t");
-						out.print(key);
+						out.print(key[i]);
 					}
-					out.println("\t");
+					out.print("\t");
+					out.println(1);
 				}
 			}
 		}
@@ -192,7 +190,7 @@ public class TBoxCP {
 		out.close();
 
 		//TODO write back to database
-
+		stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SQLStmt.entailmentPNum[ruleID]));
 	}
 
 	private void storeAssertions() throws SQLException, FileNotFoundException{
@@ -203,10 +201,13 @@ public class TBoxCP {
 
 		for(int i=1; i<=6; i++){
 			stmt.execute(String.format("drop table if exists p%d", i));
+			stmt.execute(String.format("drop table if exists tp%d", i));
 			if (i==SC_1 || i==SR_1) {
 				stmt.execute(String.format("create table p%d%s", i, rtable));
+				stmt.execute(String.format("create table tp%d%s", i, rtable));
 			}else{
 				stmt.execute(String.format("create table p%d%s", i, ttable));
+				stmt.execute(String.format("create table tp%d%s", i, ttable));
 			}
 		}
 
@@ -229,6 +230,7 @@ public class TBoxCP {
 				out.print("\t0\n");
 				out.close();
 				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SC_1));
+				stmt.execute(String.format("load data local infile '%s' into table tp%d", TEMP_FILE, SC_1));
 			}else if (axiom instanceof GCI1Axiom) {
 				GCI1Axiom tmpAxiom = (GCI1Axiom) axiom;
 				out.print(++numAssertions);
@@ -241,6 +243,7 @@ public class TBoxCP {
 				out.print("\t0\n");
 				out.close();
 				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SC_2));
+				stmt.execute(String.format("load data local infile '%s' into table tp%d", TEMP_FILE, SC_2));
 
 			}else if (axiom instanceof GCI2Axiom){
 				GCI2Axiom tmpAxiom = (GCI2Axiom) axiom;
@@ -255,6 +258,7 @@ public class TBoxCP {
 				out.print("\t0\n");
 				out.close();
 				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SE_1));
+				stmt.execute(String.format("load data local infile '%s' into table tp%d", TEMP_FILE, SE_1));
 			}else if (axiom instanceof GCI3Axiom) {
 				GCI3Axiom tmpAxiom = (GCI3Axiom) axiom;
 				out.print(++numAssertions);
@@ -267,6 +271,7 @@ public class TBoxCP {
 				out.print("\t0\n");
 				out.close();
 				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SE_2));
+				stmt.execute(String.format("load data local infile '%s' into table tp%d", TEMP_FILE, SE_2));
 			}else if (axiom instanceof RI2Axiom){
 				RI2Axiom tmpAxiom = (RI2Axiom) axiom;
 				out.print(++numAssertions);
@@ -277,6 +282,7 @@ public class TBoxCP {
 				out.print("\t0\n");
 				out.close();
 				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SR_1));
+				stmt.execute(String.format("load data local infile '%s' into table tp%d", TEMP_FILE, SR_1));
 			}else if (axiom instanceof RI3Axiom){
 				RI3Axiom tmpAxiom = (RI3Axiom) axiom;
 				out.print(++numAssertions);
@@ -289,6 +295,7 @@ public class TBoxCP {
 				out.print("\t0\n");
 				out.close();
 				stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SR_2));
+				stmt.execute(String.format("load data local infile '%s' into table tp%d", TEMP_FILE, SR_2));
 			}
 
 			//Ignore RI1Axiom nominal

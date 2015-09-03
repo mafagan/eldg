@@ -15,10 +15,7 @@ import utils.LOG;
 import java.io.FileNotFoundException;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.SelectableChannel;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.*;
 
 /**
@@ -92,13 +89,13 @@ public class PatternGeneration {
             /* TBD */
             //S_a.remove(g);
 
-            addPattern(S_v, g);
+            addPattern(S_v, g, false);
 
             if (findSubstitution(g, false))
-                addPattern(S, g);
+                addPattern(S, g, false);
 
             if (findSubstitution(g, true)){
-                addPattern(S_a, g);
+                addPattern(S_a, g, true);
 
 //                Iterator<NormalizedIntegerAxiom> gIterator = g.iterator();
 //
@@ -110,7 +107,7 @@ public class PatternGeneration {
                 Iterator<Set<NormalizedIntegerAxiom>> candiIterator = candidatePattern.iterator();
 
                 while (candiIterator.hasNext())
-                    addPattern(S_a, candiIterator.next());
+                    addPattern(S_a, candiIterator.next(), true);
 
             }
 
@@ -170,13 +167,24 @@ public class PatternGeneration {
                 continue;
             else{
                 Set<Set<NormalizedIntegerAxiom>> bodyPart = getRuleBody(tmpAxiom, max);
-                //TODO create new pattern
+
+                Iterator<Set<NormalizedIntegerAxiom>> bodyPartIt = bodyPart.iterator();
+                while (bodyPartIt.hasNext()){
+                    Set<NormalizedIntegerAxiom> replacePart = bodyPartIt.next();
+
+                    Set<NormalizedIntegerAxiom> replaceAxiomSet = new HashSet<NormalizedIntegerAxiom>();
+                    replaceAxiomSet.addAll(gSet);
+                    replaceAxiomSet.remove(tmpAxiom);
+                    replaceAxiomSet.addAll(replacePart);
+
+                    candidateSet.add(replaceAxiomSet);
+                }
             }
 
 
         }
 
-        return null;
+        return candidateSet;
     }
 
     /* replace rule.head with rule.body */
@@ -230,7 +238,7 @@ public class PatternGeneration {
             Set<NormalizedIntegerAxiom> cp8 = new HashSet<NormalizedIntegerAxiom>();
             cp8.add(fat.createGCI2Axiom(tmpAxiom.getSubClass(), maxId+1, maxId+2));
             cp8.add(fat.createGCI2Axiom(maxId+2, maxId+3, tmpAxiom.getClassInSuperClass()));
-            cp8.add(fat.createRI3Axiom(maxId+1, maxId+3, tmpAxiom.getPropertyInSuperClass()));
+            cp8.add(fat.createRI3Axiom(maxId + 1, maxId + 3, tmpAxiom.getPropertyInSuperClass()));
             bodyPart.add(cp8);
 
         }
@@ -238,7 +246,12 @@ public class PatternGeneration {
         return bodyPart;
     }
 
-    private void addPattern(Set<Set<NormalizedIntegerAxiom>> patternSet, Set<NormalizedIntegerAxiom> pattern){
+    private void addPattern(Set<Set<NormalizedIntegerAxiom>> patternSet, Set<NormalizedIntegerAxiom> pattern, boolean checkVariant){
+        if (!checkVariant){
+            patternSet.add(pattern);
+            return;
+        }
+
         Iterator<Set<NormalizedIntegerAxiom>> psIt = patternSet.iterator();
         while (psIt.hasNext()){
             Set<NormalizedIntegerAxiom> tmpPattern = psIt.next();
@@ -290,9 +303,13 @@ public class PatternGeneration {
         return null;
     }
 
-    private boolean findSubstitution(Set<NormalizedIntegerAxiom> g, boolean isTboxCp){
+    private boolean findSubstitution(Set<NormalizedIntegerAxiom> g, boolean isTboxCp) throws SQLException {
+        Statement stmt = dbConnection.createStatement();
+        String sql = compseSQL(g, isTboxCp);
 
-        return true;
+        ResultSet rt = stmt.executeQuery(sql);
+
+        return rt.next();
     }
 
     public Set<Set<NormalizedIntegerAxiom>> getPatterns(){
@@ -316,12 +333,14 @@ public class PatternGeneration {
         return paInfo.isEqual(pbInfo);
     }
 
-    private String compseSQL(Set<NormalizedIntegerAxiom> pattern){
+    private String compseSQL(Set<NormalizedIntegerAxiom> pattern, boolean isTboxCp){
         if (pattern == null)
             return null;
 
         String sqlstmt = "select * from ";
+
         String tablePrefix = "p";
+        if (!isTboxCp) tablePrefix = "t" + tablePrefix;
 
         Map<Integer, IDInfo> equalMap = new HashMap<Integer, IDInfo>();
         Iterator<NormalizedIntegerAxiom> axiomIterator = pattern.iterator();
