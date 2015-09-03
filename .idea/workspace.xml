@@ -2,10 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="abe900a9-0d0f-4f3e-aed4-6e1d2a2d3d5d" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/el/dg/PatternGeneration.java" afterPath="$PROJECT_DIR$/src/com/el/dg/PatternGeneration.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/el/dg/SQLStmt.java" afterPath="$PROJECT_DIR$/src/com/el/dg/SQLStmt.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/com/el/dg/TBoxCP.java" afterPath="$PROJECT_DIR$/src/com/el/dg/TBoxCP.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="eldg.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -31,17 +29,17 @@
         <entry file="file://$PROJECT_DIR$/src/com/el/dg/SQLStmt.java">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="20" column="69" selection-start-line="20" selection-start-column="69" selection-end-line="20" selection-end-column="69" />
+              <caret line="24" column="65" selection-start-line="24" selection-start-column="65" selection-end-line="24" selection-end-column="65" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="TBoxCP.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="TBoxCP.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/com/el/dg/TBoxCP.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="271" column="31" selection-start-line="271" selection-start-column="31" selection-end-line="271" selection-end-column="31" />
+            <state vertical-scroll-proportion="0.85046726">
+              <caret line="194" column="0" selection-start-line="194" selection-start-column="0" selection-end-line="194" selection-end-column="0" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -49,10 +47,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="PatternGeneration.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="PatternGeneration.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/com/el/dg/PatternGeneration.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.46134022">
+            <state vertical-scroll-proportion="0.0">
               <caret line="172" column="40" selection-start-line="172" selection-start-column="40" selection-end-line="172" selection-end-column="40" />
               <folding>
                 <element signature="imports" expanded="true" />
@@ -98,10 +96,10 @@
         <option value="$PROJECT_DIR$/src/generator/ABoxCompletionGenerator.java" />
         <option value="$PROJECT_DIR$/src/com/el/dg/main.java" />
         <option value="$PROJECT_DIR$/src/com/el/dg/PatternSignature.java" />
-        <option value="$PROJECT_DIR$/src/com/el/dg/SQLStmt.java" />
         <option value="$PROJECT_DIR$/src/com/el/dg/PatternInfo.java" />
-        <option value="$PROJECT_DIR$/src/com/el/dg/TBoxCP.java" />
         <option value="$PROJECT_DIR$/src/com/el/dg/PatternGeneration.java" />
+        <option value="$PROJECT_DIR$/src/com/el/dg/SQLStmt.java" />
+        <option value="$PROJECT_DIR$/src/com/el/dg/TBoxCP.java" />
       </list>
     </option>
   </component>
@@ -775,32 +773,32 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/com/el/dg/PatternGeneration.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="172" column="40" selection-start-line="172" selection-start-column="40" selection-end-line="172" selection-end-column="40" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#8532#8556#0" expanded="true" />
+            <element signature="e#8847#8871#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/com/el/dg/SQLStmt.java">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="20" column="69" selection-start-line="20" selection-start-column="69" selection-end-line="20" selection-end-column="69" />
+          <caret line="24" column="65" selection-start-line="24" selection-start-column="65" selection-end-line="24" selection-end-column="65" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/com/el/dg/TBoxCP.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="271" column="31" selection-start-line="271" selection-start-column="31" selection-end-line="271" selection-end-column="31" />
+        <state vertical-scroll-proportion="0.85046726">
+          <caret line="194" column="0" selection-start-line="194" selection-start-column="0" selection-end-line="194" selection-end-column="0" />
           <folding>
             <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/com/el/dg/PatternGeneration.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.46134022">
-          <caret line="172" column="40" selection-start-line="172" selection-start-column="40" selection-end-line="172" selection-end-column="40" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#8532#8556#0" expanded="true" />
-            <element signature="e#8847#8871#0" expanded="true" />
           </folding>
         </state>
       </provider>

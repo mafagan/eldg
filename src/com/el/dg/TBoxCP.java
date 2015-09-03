@@ -192,6 +192,7 @@ public class TBoxCP {
 		out.close();
 
 		//TODO write back to database
+
 	}
 
 	private void storeAssertions() throws SQLException, FileNotFoundException{
