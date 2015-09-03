@@ -12,7 +12,9 @@ import sun.dc.path.PathError;
 import sun.tools.jconsole.MaximizableInternalFrame;
 import utils.LOG;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.SelectableChannel;
 import java.sql.*;
@@ -30,6 +32,7 @@ public class PatternGeneration {
     private Set<Set<NormalizedIntegerAxiom>> S_v;
     private Set<Set<NormalizedIntegerAxiom>> S_a;
 
+    private Map<Set<NormalizedIntegerAxiom>, Integer> supportMap;
     private Map<Integer, OWLClass> classMap;
     private Map<Integer, OWLObjectProperty> propMap;
 
@@ -39,6 +42,8 @@ public class PatternGeneration {
     public static final String user = "root";
     public static final String password = "1";
     public static final String driver = "com.mysql.jdbc.Driver";
+
+    final private static String TEMP_FILE = "temp.txt";
 
     private Connection dbConnection;
 
@@ -60,7 +65,8 @@ public class PatternGeneration {
         add("third_node");
     }};
 
-    public PatternGeneration(OWLOntology ont) throws SQLException {
+    public PatternGeneration(OWLOntology ont) throws SQLException, ClassNotFoundException {
+        Class.forName(driver);
         dbConnection = DriverManager.getConnection(url, user, password);
         dbConnection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         Statement stmt = dbConnection.createStatement();
@@ -273,6 +279,8 @@ public class PatternGeneration {
         propMap = translatorReposity.getObjectPropertyMap();
         tbox = ruleBasedReasoner.getNormalizedIntegerAxiomSet();
 
+
+
         TBoxCP tcp = new TBoxCP(dbConnection, tbox);
         tcp.generate();
     }
@@ -309,6 +317,7 @@ public class PatternGeneration {
 
         ResultSet rt = stmt.executeQuery(sql);
 
+        stmt.close();
         return rt.next();
     }
 
@@ -491,6 +500,71 @@ public class PatternGeneration {
             return null;
         }
 
+    }
+
+    public void savePattern() throws SQLException, FileNotFoundException {
+        Statement stmt = dbConnection.createStatement();
+        String ptable = "(patternId int not null, " +
+                        "axiomType int not null, " +
+                        "fir_node int not null, " +
+                        "sec_node int not null, " +
+                        "third_node int not null, " +
+                        "support int not null)" ;
+
+        stmt.execute("drop table if exists patterns");
+        stmt.execute("create table patterns" + ptable);
+
+        if (!dbConnection.getAutoCommit())
+            dbConnection.commit();
+
+        PrintStream out = new PrintStream(TEMP_FILE);
+
+        Integer patternId = 1;
+
+        Iterator<Set<NormalizedIntegerAxiom>> sIterator = S.iterator();
+        while (sIterator.hasNext()){
+            Set<NormalizedIntegerAxiom> pattern = sIterator.next();
+            Integer support = supportMap.get(pattern);
+
+            Iterator<NormalizedIntegerAxiom> patternIt = pattern.iterator();
+            while (patternIt.hasNext()){
+                NormalizedIntegerAxiom tmpAxiom = patternIt.next();
+
+                if (tmpAxiom instanceof GCI0Axiom){
+                    GCI0Axiom axiom = (GCI0Axiom) tmpAxiom;
+                    out.println(patternId + "\t" + axiomTypeMap.get(GCI0Axiom.class.toString())
+                            + "\t" + axiom.getSubClass() + "\t"
+                            + axiom.getSuperClass() + "\t0\t"
+                            + support);
+                }else if (tmpAxiom instanceof GCI1Axiom){
+                    //TODO
+                }else if (tmpAxiom instanceof GCI2Axiom){
+
+                }else if (tmpAxiom instanceof GCI3Axiom){
+
+                }else if (tmpAxiom instanceof RI2Axiom){
+
+                }else if (tmpAxiom instanceof RI3Axiom){
+
+                }
+            }
+            patternId++;
+
+        }
+
+        out.close();
+        stmt.execute("load data local infile '" + TEMP_FILE + "' ignore into table patterns");
+        if (!dbConnection.getAutoCommit())
+            dbConnection.commit();
+
+        stmt.close();
+        (new File(TEMP_FILE)).delete();
+
+    }
+
+    public Set<Set<NormalizedIntegerAxiom>> restorePattern(){
+
+        return null;
     }
 }
  class IDInfo{

@@ -1,5 +1,6 @@
 package com.el.dg;
 
+import java.io.File;
 import java.util.List;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
@@ -305,6 +306,7 @@ public class TBoxCP {
 
 		}
 		stmt.close();
+		(new File(TEMP_FILE)).delete();
 	}
 
 	/* map pred and integer */
