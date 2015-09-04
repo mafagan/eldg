@@ -38,28 +38,28 @@ public class main {
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		manager.setSilentMissingImportsHandling(true);
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(ontFile);
-
-		JcelReasoner reasoner = new JcelReasoner(ontology, false);
-		RuleBasedReasoner ruleBasedReasoner = (RuleBasedReasoner) reasoner.getReasoner();
-
-		TranslationRepository translatorReposity = reasoner.getTranslator().getTranslationRepository();
-
-		Set<NormalizedIntegerAxiom> normalizedIntegerAxiomSet = ruleBasedReasoner.getNormalizedIntegerAxiomSet();
-
-		Map<Integer, OWLClass> map = translatorReposity.getClassMap();
-		Iterator<Integer> itt = map.keySet().iterator();
-		while (itt.hasNext()){
-			Integer intt = itt.next();
-			LOG.info(intt + " " + map.get(intt));
-		}
-
-
-		Iterator<NormalizedIntegerAxiom> iterator = normalizedIntegerAxiomSet.iterator();
-
-		while (iterator.hasNext()){
-			String str = iterator.next().toString();
-			LOG.info(str);
-		}
+//
+//		JcelReasoner reasoner = new JcelReasoner(ontology, false);
+//		RuleBasedReasoner ruleBasedReasoner = (RuleBasedReasoner) reasoner.getReasoner();
+//
+//		TranslationRepository translatorReposity = reasoner.getTranslator().getTranslationRepository();
+//
+//		Set<NormalizedIntegerAxiom> normalizedIntegerAxiomSet = ruleBasedReasoner.getNormalizedIntegerAxiomSet();
+//
+//		Map<Integer, OWLClass> map = translatorReposity.getClassMap();
+//		Iterator<Integer> itt = map.keySet().iterator();
+//		while (itt.hasNext()){
+//			Integer intt = itt.next();
+//			LOG.info(intt + " " + map.get(intt));
+//		}
+//
+//
+//		Iterator<NormalizedIntegerAxiom> iterator = normalizedIntegerAxiomSet.iterator();
+//
+//		while (iterator.hasNext()){
+//			String str = iterator.next().toString();
+//			LOG.info(str);
+//		}
 	}
 
 	public static void main(String[] args) throws SQLException, ClassNotFoundException, FileNotFoundException, OWLOntologyCreationException {
@@ -78,27 +78,27 @@ public class main {
 		
 		/* init logging system */
 		LOG.flag = true;
-		main test = new main();
-		test.test();
-		if (true)
-			return;
 
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		manager.setSilentMissingImportsHandling(true);
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File(ONT_FILE));
-		IRI likeIri = IRI.create("http://danye.me/like");
-		Literal body1 = new Literal(likeIri, new String[]{"?A", "?B", "?C"});
-		Literal body2 = new Literal(likeIri, new String[]{"?B", "?C", "?D"});
-		Literal head = new Literal(likeIri, new String[]{"?A", "?B", "?D"});
-		
-		LogicalRule rule = new LogicalRule();
-		rule.head.add(head);
-		rule.body.add(body1);
-		rule.body.add(body2);
-		
-		List<LogicalRule> ruleList = new ArrayList<LogicalRule>();
-		ruleList.add(rule);
-		TBoxCP generator = new TBoxCP(url, user, password, ontology);
+
+		PatternGeneration patternGeneration = new PatternGeneration(ontology);
+		patternGeneration.doGenerate();
+		patternGeneration.savePattern();
+//		IRI likeIri = IRI.create("http://danye.me/like");
+//		Literal body1 = new Literal(likeIri, new String[]{"?A", "?B", "?C"});
+//		Literal body2 = new Literal(likeIri, new String[]{"?B", "?C", "?D"});
+//		Literal head = new Literal(likeIri, new String[]{"?A", "?B", "?D"});
+//
+//		LogicalRule rule = new LogicalRule();
+//		rule.head.add(head);
+//		rule.body.add(body1);
+//		rule.body.add(body2);
+//
+//		List<LogicalRule> ruleList = new ArrayList<LogicalRule>();
+//		ruleList.add(rule);
+//		TBoxCP generator = new TBoxCP(url, user, password, ontology);
 		//generator.addRule(rule);
 //		generator.setup(ruleList);
 //		generator.computeCompletion();

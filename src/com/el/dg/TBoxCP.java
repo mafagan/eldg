@@ -165,9 +165,9 @@ public class TBoxCP {
 
 		PrintStream out = new PrintStream(TEMP_FILE);
 
-
 		ResultSet rs = stmt.executeQuery(SQLStmt.rules[ruleID]);
 		while (rs.next()){
+
 			if (rs.getInt("id") == 0){
 				int[] key = new int[rs.getMetaData().getColumnCount()-1];
 				for (int i=0; i<key.length; i++){
@@ -178,7 +178,7 @@ public class TBoxCP {
 					keySet.add(key);
 
 					out.print(++numAssertions);
-					for (int i=0; i<key.length-1; i++){
+					for (int i=0; i<key.length; i++){
 						out.print("\t");
 						out.print(key[i]);
 					}
@@ -190,8 +190,8 @@ public class TBoxCP {
 		rs.close();
 		out.close();
 
-		//TODO write back to database
 		stmt.execute(String.format("load data local infile '%s' into table p%d", TEMP_FILE, SQLStmt.entailmentPNum[ruleID]));
+		(new File(TEMP_FILE)).delete();
 	}
 
 	private void storeAssertions() throws SQLException, FileNotFoundException{
@@ -218,7 +218,7 @@ public class TBoxCP {
 		Iterator<NormalizedIntegerAxiom> norIterator = normalizedIntegerAxiomSet.iterator();
 		while (norIterator.hasNext()) {
 			NormalizedIntegerAxiom axiom = (NormalizedIntegerAxiom) norIterator.next();
-			LOG.info(axiom.toString());
+			//LOG.info(axiom.toString());
 			PrintStream out = new PrintStream(TEMP_FILE);
 			//System.out.println(axiom.getClass());
 			if (axiom instanceof GCI0Axiom) {

@@ -10,91 +10,50 @@
 
 
 <Ontology xmlns="http://www.w3.org/2002/07/owl#"
-     xml:base="http://danye.me/"
+     xml:base="http://danye.me"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:xml="http://www.w3.org/XML/1998/namespace"
-     ontologyIRI="http://danye.me/">
-    <Prefix name="" IRI="http://www.w3.org/2002/07/owl#"/>
-    <Prefix name="owl" IRI="http://www.w3.org/2002/07/owl#"/>
+     ontologyIRI="http://danye.me">
     <Prefix name="rdf" IRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
-    <Prefix name="xsd" IRI="http://www.w3.org/2001/XMLSchema#"/>
     <Prefix name="rdfs" IRI="http://www.w3.org/2000/01/rdf-schema#"/>
+    <Prefix name="xsd" IRI="http://www.w3.org/2001/XMLSchema#"/>
+    <Prefix name="owl" IRI="http://www.w3.org/2002/07/owl#"/>
     <Declaration>
-        <Class IRI="Animal"/>
+        <Class IRI="#A"/>
     </Declaration>
     <Declaration>
-        <Class IRI="Ladyboy"/>
+        <Class IRI="#B"/>
     </Declaration>
     <Declaration>
-        <Class IRI="Men"/>
+        <Class IRI="#C"/>
     </Declaration>
     <Declaration>
-        <Class IRI="Person"/>
+        <Class IRI="#D"/>
     </Declaration>
     <Declaration>
-        <Class IRI="Woman"/>
-    </Declaration>
-    <Declaration>
-        <ObjectProperty IRI="like"/>
-    </Declaration>
-    <Declaration>
-        <NamedIndividual IRI="Peter"/>
-    </Declaration>
-    <Declaration>
-        <NamedIndividual IRI="daddy"/>
-    </Declaration>
-    <Declaration>
-        <NamedIndividual IRI="mum"/>
+        <Class IRI="#E"/>
     </Declaration>
     <SubClassOf>
-        <Class IRI="Ladyboy"/>
-        <Class IRI="Person"/>
+        <Class IRI="#A"/>
+        <Class IRI="#B"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="Men"/>
-        <Class IRI="Person"/>
+        <Class IRI="#A"/>
+        <Class IRI="#C"/>
     </SubClassOf>
     <SubClassOf>
-        <Class IRI="Person"/>
-        <Class IRI="Animal"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="Woman"/>
-        <Class IRI="Person"/>
-    </SubClassOf>
-    <SubClassOf>
-        <Class IRI="Woman"/>
-        <ObjectSomeValuesFrom>
-            <ObjectProperty IRI="like"/>
-            <Class IRI="Men"/>
-        </ObjectSomeValuesFrom>
+        <Class IRI="#D"/>
+        <Class IRI="#E"/>
     </SubClassOf>
     <SubClassOf>
         <ObjectIntersectionOf>
-            <Class IRI="Men"/>
-            <Class IRI="Woman"/>
+            <Class IRI="#B"/>
+            <Class IRI="#C"/>
         </ObjectIntersectionOf>
-        <ObjectSomeValuesFrom>
-            <ObjectProperty IRI="like"/>
-            <Class IRI="Ladyboy"/>
-        </ObjectSomeValuesFrom>
+        <Class IRI="#D"/>
     </SubClassOf>
-    <ClassAssertion>
-        <Class IRI="Men"/>
-        <NamedIndividual IRI="Peter"/>
-    </ClassAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="like"/>
-        <NamedIndividual IRI="daddy"/>
-        <NamedIndividual IRI="mum"/>
-    </ObjectPropertyAssertion>
-    <ObjectPropertyAssertion>
-        <ObjectProperty IRI="like"/>
-        <NamedIndividual IRI="mum"/>
-        <NamedIndividual IRI="Peter"/>
-    </ObjectPropertyAssertion>
 </Ontology>
 
 
