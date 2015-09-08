@@ -330,7 +330,6 @@ public class PatternGeneration {
     private void doPretreatment() throws FileNotFoundException, SQLException, ClassNotFoundException {
         JcelReasoner reasoner = new JcelReasoner(ontology, false);
         RuleBasedReasoner ruleBasedReasoner = (RuleBasedReasoner) reasoner.getReasoner();
-
         TranslationRepository translatorReposity = reasoner.getTranslator().getTranslationRepository();
         classMap = translatorReposity.getClassMap();
         propMap = translatorReposity.getObjectPropertyMap();
@@ -347,6 +346,7 @@ public class PatternGeneration {
 
         Set<NormalizedIntegerAxiom> initialPattern = new HashSet<NormalizedIntegerAxiom>();
         GCI0Axiom initialAxiom = fat.createGCI0Axiom(1, 2);
+        //ruleBasedReasoner.isEntailed(initialAxiom);
         initialPattern.add(initialAxiom);
         S_a.add(initialPattern);
 
