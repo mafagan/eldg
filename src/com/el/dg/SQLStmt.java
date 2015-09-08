@@ -18,7 +18,7 @@ public class SQLStmt {
 
     public static String CR_7 = "select distinct b0.fir_node, b1.tnode, b0.third_node, h0.id from p3 b0 inner join p5 b1 on b0.sec_node=b1.fnode left join p3 h0 on b0.fir_node=h0.fir_node and b1.tnode=h0.sec_node and b0.third_node=h0.third_node;";
 
-    public static String CR_8 = "select distinct b0.fir_node, b1.third_node, b2.third_node from p3 b0 inner join p6 b1 on b0.sec_node=b1.fir_node inner join p3 b2 on b1.sec_node=b2.sec_node and b0.third_node=b2.fir_node left join p3 h0 on b0.fir_node=h0.fir_node and b1.third_node=h0.sec_node and b0.third_node=h0.third_node;";
+    public static String CR_8 = "select distinct b0.fir_node, b1.third_node, b2.third_node, h0.id from p3 b0 inner join p6 b1 on b0.sec_node=b1.fir_node inner join p3 b2 on b1.sec_node=b2.sec_node and b0.third_node=b2.fir_node left join p3 h0 on b0.fir_node=h0.fir_node and b1.third_node=h0.sec_node and b0.third_node=h0.third_node;";
 
 //    public static String CR_1 = "select distinct b0.fnode, b1.tnode, h0.id from p1 b0 cross join p1 b1 on b0.tnode=b1.fnode left join p1 h0 on b0.fnode=h0.fnode and b1.tnode=h0.tnode";
 //    public static String CR_2 = "select distinct b0.fir_node, b0.sec_node, b1.tnode, h0.id from p4 b0 cross join p1 b1 on b0.third_node=b1.fnode left join p4 h0 on b0.fir_node=h0.fir_node and b0.sec_node=h0.sec_node and b1.tnode=h0.third_node";

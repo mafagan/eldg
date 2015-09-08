@@ -1,14 +1,10 @@
 package com.el.dg;
 
 import java.io.File;
+import java.sql.*;
 import java.util.List;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -142,7 +138,9 @@ public class TBoxCP {
 
 //		normalize();
 
+		LOG.info("Loading tbox into database...");
 		storeAssertions();
+		LOG.info("completely");
 
 		generateEntailment();
 
@@ -166,8 +164,19 @@ public class TBoxCP {
 		PrintStream out = new PrintStream(TEMP_FILE);
 
 		ResultSet rs = stmt.executeQuery(SQLStmt.rules[ruleID]);
+
+		/* for debug */
+
+		Set<String> columnNameSet = new HashSet<String>();
+		ResultSetMetaData resultSetMetaData = rs.getMetaData();
+		for (int i=1; i<=resultSetMetaData.getColumnCount(); i++){
+			columnNameSet.add(resultSetMetaData.getColumnName(i));
+		}
+		LOG.info(columnNameSet.toString());
+
 		while (rs.next()){
 
+			//LOG.info(rs.toString());
 			if (rs.getInt("id") == 0){
 				int[] key = new int[rs.getMetaData().getColumnCount()-1];
 				for (int i=0; i<key.length; i++){
@@ -203,6 +212,10 @@ public class TBoxCP {
 		for(int i=1; i<=6; i++){
 			stmt.execute(String.format("drop table if exists p%d", i));
 			stmt.execute(String.format("drop table if exists tp%d", i));
+
+			if (!dbConnection.getAutoCommit())
+				dbConnection.commit();
+
 			if (i==SC_1 || i==SR_1) {
 				stmt.execute(String.format("create table p%d%s", i, rtable));
 				stmt.execute(String.format("create table tp%d%s", i, rtable));
@@ -210,6 +223,9 @@ public class TBoxCP {
 				stmt.execute(String.format("create table p%d%s", i, ttable));
 				stmt.execute(String.format("create table tp%d%s", i, ttable));
 			}
+
+			if (!dbConnection.getAutoCommit())
+				dbConnection.commit();
 		}
 
 

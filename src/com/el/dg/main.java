@@ -21,6 +21,8 @@ import utils.LOG;
 import utils.Literal;
 import utils.LogicalRule;
 
+import javax.print.attribute.standard.MediaSize;
+
 public class main {
 
 	/**
@@ -79,10 +81,17 @@ public class main {
 		/* init logging system */
 		LOG.flag = true;
 
+
+
+		if (LOG.flag){
+			LOG.info("Logging module loaded.\n");
+		}
+
+		LOG.info("Loading TBox...");
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		manager.setSilentMissingImportsHandling(true);
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File(ONT_FILE));
-
+		LOG.info("Load completely.\n");
 		PatternGeneration patternGeneration = new PatternGeneration(ontology);
 		patternGeneration.doGenerate();
 		patternGeneration.savePattern();

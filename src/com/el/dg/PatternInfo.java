@@ -38,7 +38,7 @@ public class PatternInfo {
             Set<Integer> axiomTypeIDCount = iriCount.get(key);
             Set<Integer> pbAxiomTypeCount = b.iriCount.get(key);
 
-            if (axiomTypeIDCount != pbAxiomTypeCount)
+            if (!axiomTypeIDCount.equals(pbAxiomTypeCount))
                 return false;
 
         }

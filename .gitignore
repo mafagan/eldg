@@ -13,3 +13,6 @@ hs_err_pid*
 
 # tmp file
 temp.txt
+
+# test file
+*.owl

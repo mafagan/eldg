@@ -98,10 +98,11 @@ public class PatternGeneration {
 
             addPattern(S_v, g, false);
 
-            if (findSubstitution(g, false))
+            if (findSubstitution(g, false)>0)
                 addPattern(S, g, false);
 
-            if (findSubstitution(g, true)){
+
+            if (findSubstitution(g, true)>0){
                 addPattern(S_a, g, true);
 
 //                Iterator<NormalizedIntegerAxiom> gIterator = g.iterator();
@@ -121,6 +122,61 @@ public class PatternGeneration {
 
             diffPattern = a_patternInSetDifference(S_a, S_v);
         }
+    }
+
+    private void addISubstitution(Set<Set<NormalizedIntegerAxiom>> Sa, Set<NormalizedIntegerAxiom> pattern){
+        Set<Integer> classSigSet = getClassSignature(pattern);
+        Set<Integer> propertySet = getPropertySignature(pattern);
+
+        int maxId = getMaxId(getSignature(pattern));
+
+        /***** (X,Y)-forbidden *******/
+        classSigSet.remove(1);
+        classSigSet.remove(2);
+
+        ArrayList<Integer> classSigList = new ArrayList<Integer>(classSigSet);
+        ArrayList<Integer> propertyList = new ArrayList<Integer>(propertySet);
+
+        int classLength = classSigList.size();
+        int proprtyLength = propertyList.size();
+
+        int[] classFlag = new int[classLength];
+        int[] propertyFlag = new int[proprtyLength];
+
+        for (int ci=1; ci<classLength; ci++){
+
+            for (int pi=1; pi<proprtyLength; pi++){
+                if (pi + ci == 2) continue;
+
+                if (ci>1){
+
+                }
+
+            }
+        }
+    }
+
+    private Set<Integer> getClassSignature(Set<NormalizedIntegerAxiom> pattern){
+        Set<Integer> classSignature = new HashSet<Integer>();
+
+        Iterator<NormalizedIntegerAxiom> iterator = pattern.iterator();
+        while (iterator.hasNext()){
+            NormalizedIntegerAxiom tmpAxiom = iterator.next();
+            classSignature.addAll(tmpAxiom.getClassesInSignature());
+        }
+
+        return classSignature;
+    }
+
+    private Set<Integer> getPropertySignature(Set<NormalizedIntegerAxiom> pattern){
+        Set<Integer> propertySignature = new HashSet<Integer>();
+        Iterator<NormalizedIntegerAxiom> iterator = pattern.iterator();
+        while (iterator.hasNext()){
+            NormalizedIntegerAxiom tmpAxiom = iterator.next();
+            propertySignature.addAll(tmpAxiom.getObjectPropertiesInSignature());
+        }
+
+        return propertySignature;
     }
 
     private Set<Integer> getSignature(Set<NormalizedIntegerAxiom> pattern){
@@ -226,7 +282,7 @@ public class PatternGeneration {
             Set<NormalizedIntegerAxiom> cp5 = new HashSet<NormalizedIntegerAxiom>();
             cp5.add(fat.createGCI2Axiom(tmpAxiom.getSubClass(), maxId + 1, maxId + 2));
             cp5.add(fat.createGCI0Axiom(maxId + 2, maxId + 3));
-            cp5.add(fat.createGCI3Axiom(maxId + 1, maxId + 3, tmpAxiom.getSubClass()));
+            cp5.add(fat.createGCI3Axiom(maxId + 1, maxId + 3, tmpAxiom.getSuperClass()));
             bodyPart.add(cp5);
 
             Set<NormalizedIntegerAxiom> cp6 = new HashSet<NormalizedIntegerAxiom>();
@@ -278,7 +334,10 @@ public class PatternGeneration {
         TranslationRepository translatorReposity = reasoner.getTranslator().getTranslationRepository();
         classMap = translatorReposity.getClassMap();
         propMap = translatorReposity.getObjectPropertyMap();
+
+        LOG.info("Normalizing tbox...");
         tbox = ruleBasedReasoner.getNormalizedIntegerAxiomSet();
+        LOG.info("completely.\n");
 
         fat  = new NormalizedIntegerAxiomFactoryImpl();
 
@@ -323,22 +382,52 @@ public class PatternGeneration {
         return null;
     }
 
-    private boolean findSubstitution(Set<NormalizedIntegerAxiom> g, boolean isTboxCp) throws SQLException {
+    private int findSubstitution(Set<NormalizedIntegerAxiom> g, boolean isTboxCp) throws SQLException {
         Statement stmt = dbConnection.createStatement();
-        String sql = compseSQL(g, isTboxCp);
-        LOG.info(sql);
-        ResultSet rt = stmt.executeQuery(sql);
+        SQLInfo sqlinfo = compseSQL(g, isTboxCp);
+        Map<String, ArrayList<Integer>> ineqMap = sqlinfo.ineqMap;
+
+        ResultSet rt = stmt.executeQuery(sqlinfo.sql);
+
+        int counter = 0;
+        int fakeRow = 0;
+
+        while (rt.next()){
+
+            Iterator<String> iterator = ineqMap.keySet().iterator();
+            while (iterator.hasNext()){
+                String key = iterator.next();
+
+                ArrayList<Integer> integerArrayList = ineqMap.get(key);
+                Set<Integer> indexSet = new HashSet<Integer>();
+
+                for (Integer index: integerArrayList){
+                    if (indexSet.contains(index)){
+                        fakeRow++;
+                        break;
+                    }else {
+                        indexSet.add(index);
+                    }
+                }
+
+            }
+            counter++;
+        }
+
+        int support = counter - fakeRow;
 
 
-        rt.last();
-        int support = rt.getRow();
-
+        if (support>0){
+            LOG.info(g.toString());
+            LOG.info(sqlinfo.sql);
+            LOG.info(support + "\n");
+        }
         stmt.close();
 
         if (!isTboxCp && !supportMap.keySet().contains(g) && support!=0)
             supportMap.put(g, support);
 
-        return support!=0;
+        return support;
     }
 
     public Set<Set<NormalizedIntegerAxiom>> getPatterns(){
@@ -346,6 +435,8 @@ public class PatternGeneration {
     }
 
     private boolean isPatternEqual(Set<NormalizedIntegerAxiom> pa, Set<NormalizedIntegerAxiom> pb){
+
+        //if (pa == pb) return true;
 
         if (pa.size() != pb.size())
             return false;
@@ -362,7 +453,7 @@ public class PatternGeneration {
         return paInfo.isEqual(pbInfo);
     }
 
-    private String compseSQL(Set<NormalizedIntegerAxiom> pattern, boolean isTboxCp){
+    private SQLInfo compseSQL(Set<NormalizedIntegerAxiom> pattern, boolean isTboxCp){
         if (pattern == null)
             return null;
 
@@ -375,9 +466,24 @@ public class PatternGeneration {
         Iterator<NormalizedIntegerAxiom> axiomIterator = pattern.iterator();
 
         Integer index = 0;
+        Map<String, ArrayList<Integer>> ineqMap = new HashMap<String, ArrayList<Integer>>();
+        SQLInfo sqlInfo = new SQLInfo();
 
         while (axiomIterator.hasNext()){
+
+
             NormalizedIntegerAxiom tmpAxiom = axiomIterator.next();
+
+            if (!ineqMap.keySet().contains(tmpAxiom.getClass().toString())){
+                ArrayList<Integer> integerArrayList = new ArrayList<Integer>();
+                integerArrayList.add(index);
+                ineqMap.put(tmpAxiom.getClass().toString(), integerArrayList);
+            }else{
+                // Maybe a bug here
+                ineqMap.get(tmpAxiom.getClass().toString()).add(index);
+            }
+
+
 
             Integer[] iris = getIRIs(tmpAxiom);
 
@@ -389,29 +495,29 @@ public class PatternGeneration {
             String tmpTableStr = "h" + index.toString();
             if (index == 0){
                 sqlstmt += tableStr + " " + tmpTableStr + " ";
-            }else{
+            }else {
                 String joinStmt = "inner join ";
-                sqlstmt += joinStmt + tableStr + " " + tmpTableStr + " on ";
-
+                sqlstmt += joinStmt + tableStr + " " + tmpTableStr;
+            }
+                Integer eqIndex = 0;
                 for (int i = 0; i<iris.length; i++){
                     if (equalMap.keySet().contains(iris[i])){
+                        if (eqIndex == 0) sqlstmt += " on ";
+                        if (eqIndex != 0) sqlstmt += "and ";
+
                         IDInfo info = equalMap.get(iris[i]);
                         String eqLeft = "h" + info.index.toString() + "." + info.column + "=";
 
                         String eqRight = tmpTableStr + "." + PatternGeneration.columnName.get((iris.length-2)*3+i) + " ";
 
-                        //TODO bug here
-                        if (i != 0)
-                            sqlstmt += "and ";
-
                         sqlstmt += eqLeft + eqRight + " ";
 
                         if (PatternGeneration.axiomTypeMap.get(tmpAxiom.getClass().toString())
                                 == info.axiomType && index != info.index){
-                            sqlstmt += "and " + "h" + index + ".id<>" + info.index + ".id ";
+                            sqlstmt += "and " + "h" + index + ".id<>h" + info.index + ".id ";
                         }
 
-
+                        eqIndex++;
                     }else{
                         /* store the first */
                         String columnName = PatternGeneration.columnName.get((iris.length - 2) * 3 + i);
@@ -421,6 +527,8 @@ public class PatternGeneration {
                     }
                 }
 
+                if (eqIndex == 0)
+                    sqlstmt += " ";
 
 
 
@@ -431,12 +539,14 @@ public class PatternGeneration {
 //                    equalMap.put(iris[i], new IDInfo(PatternGeneration.columnName.get((iris.length-2)*3+i), index,
 //                            PatternGeneration.axiomTypeMap.get(tmpAxiom.getClass().toString())));
 //                }
-            }
+
 
             index++;
         }
+        sqlInfo.ineqMap = ineqMap;
+        sqlInfo.sql = sqlstmt;
 
-        return sqlstmt;
+        return sqlInfo;
     }
 
     private String getColumnName(Integer length, Integer index){
@@ -624,4 +734,9 @@ public class PatternGeneration {
          axiomType = type;
      }
  };
+
+class SQLInfo{
+    public String sql;
+    public Map<String, ArrayList<Integer>> ineqMap;
+}
 
