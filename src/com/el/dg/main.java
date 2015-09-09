@@ -81,7 +81,14 @@ public class main {
 		/* init logging system */
 		LOG.flag = true;
 
-
+		if (true){
+			String aa = "hei";
+			String bb = "hei";
+			Set<String> tt = new HashSet<String>();
+			tt.add(aa);
+			LOG.info(tt.contains(bb));
+			return;
+		}
 
 		if (LOG.flag){
 			LOG.info("Logging module loaded.\n");

@@ -135,25 +135,203 @@ public class PatternGeneration {
         classSigSet.remove(2);
 
         ArrayList<Integer> classSigList = new ArrayList<Integer>(classSigSet);
-        ArrayList<Integer> propertyList = new ArrayList<Integer>(propertySet);
+        ArrayList<Integer> propertySigList = new ArrayList<Integer>(propertySet);
 
         int classLength = classSigList.size();
-        int proprtyLength = propertyList.size();
+        int proprtyLength = propertySigList.size();
 
         int[] classFlag = new int[classLength];
         int[] propertyFlag = new int[proprtyLength];
+
+
+
 
         for (int ci=1; ci<classLength; ci++){
 
             for (int pi=1; pi<proprtyLength; pi++){
                 if (pi + ci == 2) continue;
 
-                if (ci>1){
+                if (ci!=1)
+                    for (int i=0; i<ci; i++) classFlag[i] = 1;
 
+                if (pi!=1)
+                    for (int i=0; i<pi; i++) propertyFlag[i] = 1;
+
+                boolean classHasNext = true;
+                while (classHasNext){
+                    Set<Integer> classSubsSet = new HashSet<Integer>();
+                    Set<Integer> propertySubsSet = new HashSet<Integer>();
+
+                    boolean propertyHasNext = true;
+
+                    while (propertyHasNext){
+
+                        for (int i=0; i<classFlag.length; i++){
+                            if (classFlag[i] == 1)
+                                classSubsSet.add(classSigList.get(i));
+
+                        }
+
+                        for (int i=0; i<propertyFlag.length; i++){
+                            if (propertyFlag[i] == 1)
+                                propertySubsSet.add(propertySigList.get(i));
+                        }
+
+                        addSubsPattern(Sa, pattern, classSubsSet, propertySubsSet, maxId);
+
+                        propertyHasNext = swapArray(propertyFlag);
+                    }
+
+                    classHasNext = swapArray(classFlag);
                 }
 
             }
         }
+    }
+
+    private void addSubsPattern(Set<Set<NormalizedIntegerAxiom>> Sa, Set<NormalizedIntegerAxiom> pattern,
+                                Set<Integer> classSubsSet, Set<Integer> proprtySubsSet, int maxID){
+        Set<NormalizedIntegerAxiom> newPattern = new HashSet<NormalizedIntegerAxiom>();
+
+        Map<Integer, Integer> newMap = new HashMap<Integer, Integer>();
+
+        Set<Integer> classSigSet = getClassSignature(pattern);
+        Set<Integer> propertySigSet = getPropertySignature(pattern);
+
+        Iterator<Integer> classSetIt = classSigSet.iterator();
+        while (classSetIt.hasNext()){
+            Integer tmp = classSetIt.next();
+
+            if (classSubsSet.contains(tmp)) newMap.put(tmp, maxID+1);
+            else newMap.put(tmp, tmp);
+        }
+
+        Iterator<Integer> propertySetIt = propertySigSet.iterator();
+        while (propertySetIt.hasNext()){
+            Integer tmp = propertySetIt.next();
+
+            if (proprtySubsSet.contains(tmp)) newMap.put(tmp, maxID+2);
+            else newMap.put(tmp, tmp);
+        }
+
+
+        Iterator<NormalizedIntegerAxiom> patternIt = pattern.iterator();
+        Set<String> axiomStringSet = new HashSet<String>();
+
+        while (patternIt.hasNext()){
+            NormalizedIntegerAxiom tmpAxiom = patternIt.next();
+
+            Set<Integer> classSet = tmpAxiom.getClassesInSignature();
+            Set<Integer> propertySet = tmpAxiom.getObjectPropertiesInSignature();
+
+            if (!containsOneOf(classSet, classSubsSet) && !containsOneOf(propertySet, proprtySubsSet)){
+                newPattern.add(tmpAxiom);
+            }else{
+
+                if (tmpAxiom instanceof GCI0Axiom){
+                    GCI0Axiom axiom = (GCI0Axiom) tmpAxiom;
+                    Integer sub = newMap.get(axiom.getSubClass());
+                    Integer sup = newMap.get(axiom.getSuperClass());
+
+                    if (sub == sup) continue;
+
+                    GCI0Axiom newAxiom = fat.createGCI0Axiom(sub, sup);
+
+                    if (axiomStringSet.contains(newAxiom.toString())) continue;
+
+                    newPattern.add(newAxiom);
+                    axiomStringSet.add(newAxiom.toString());
+
+                }else if (tmpAxiom instanceof GCI1Axiom){
+                    GCI1Axiom axiom = (GCI1Axiom) tmpAxiom;
+                    Integer leftSub = newMap.get(axiom.getLeftSubClass());
+                    Integer rightSub = newMap.get(axiom.getRightSubClass());
+                    Integer sup = newMap.get(axiom.getSuperClass());
+
+                    GCI1Axiom newAxiom = fat.createGCI1Axiom(leftSub, rightSub, sup);
+
+                    if (axiomStringSet.contains(newAxiom.toString())) continue;
+
+                    newPattern.add(newAxiom);
+                }else if (tmpAxiom instanceof GCI2Axiom){
+                    GCI2Axiom axiom = (GCI2Axiom) tmpAxiom;
+                    Integer sub = newMap.get(axiom.getSubClass());
+                    Integer classInSup = newMap.get(axiom.getClassInSuperClass());
+                    Integer propertyInSup = newMap.get(axiom.getPropertyInSuperClass());
+
+                    GCI2Axiom newAxiom = fat.createGCI2Axiom(sub, propertyInSup, classInSup);
+
+                    if (axiomStringSet.contains(newAxiom.toString())) continue;
+
+                    newPattern.add(newAxiom);
+                }else if (tmpAxiom instanceof GCI3Axiom){
+                    GCI3Axiom axiom = (GCI3Axiom) tmpAxiom;
+                    Integer classInSub = axiom.getClassInSubClass();
+                    Integer proprtyInSub = axiom.getPropertyInSubClass();
+                    Integer classInSup = axiom.getSuperClass();
+
+                    GCI3Axiom newAxiom = fat.createGCI3Axiom(proprtyInSub, classInSub, classInSup);
+
+                    if (axiomStringSet.contains(newAxiom.toString())) continue;
+
+                    newPattern.add(newAxiom);
+                }else if (tmpAxiom instanceof RI2Axiom){
+                    RI2Axiom axiom = (RI2Axiom) tmpAxiom;
+                    Integer proprtySub = axiom.getSubProperty();
+                    Integer propertySup = axiom.getSuperProperty();
+
+                    RI2Axiom newAxiom = fat.createRI2Axiom(proprtySub, propertySup);
+
+                    if (axiomStringSet.contains(newAxiom.toString())) continue;
+                    newPattern.add(newAxiom);
+                }else if (tmpAxiom instanceof RI3Axiom){
+                    RI3Axiom axiom = (RI3Axiom) tmpAxiom;
+                    Integer leftProprtySub = axiom.getLeftSubProperty();
+                    Integer rightPropertySub = axiom.getRightSubProperty();
+                    Integer propertySup = axiom.getSuperProperty();
+
+                    RI3Axiom newAxiom = fat.createRI3Axiom(leftProprtySub, rightPropertySub, propertySup);
+
+                    if (axiomStringSet.contains(newAxiom.toString())) continue;
+
+                    newPattern.add(newAxiom);
+                }
+            }
+        }
+
+        //cleanPattern(newPattern);
+        addPattern(Sa, newPattern, true);
+    }
+
+    /* TBD */
+    private void cleanPattern(Set<NormalizedIntegerAxiom> pattern){
+
+    }
+
+    private boolean containsOneOf(Set<Integer> baba, Set<Integer> erzi){
+        Iterator<Integer> iterator = erzi.iterator();
+
+        while (iterator.hasNext()){
+            Integer tmp = iterator.next();
+
+            if (baba.contains(tmp)) return true;
+        }
+
+        return false;
+    }
+
+    private boolean swapArray(int[] flagArray){
+        int len = flagArray.length;
+
+        for (int i=0; i<len-1; i++){
+            if (flagArray[i]==1 && flagArray[i+1]==0){
+                flagArray[i] = 0;
+                flagArray[i+1] = 1;
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private Set<Integer> getClassSignature(Set<NormalizedIntegerAxiom> pattern){
