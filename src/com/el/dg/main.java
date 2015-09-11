@@ -82,10 +82,24 @@ public class main {
 		LOG.flag = true;
 
 		if (false){
+<<<<<<< HEAD
 			return;
 		}
 
 
+=======
+			/* test data */
+			long startTime = System.currentTimeMillis();
+			for (int i = 0; i < 10000; i++) {
+				LOG.info("heihei");
+			}
+			long endTime = System.currentTimeMillis();
+			LOG.info(endTime-startTime);
+			return;
+		}
+		
+		
+>>>>>>> adfb44697849e3a750ffd26bb151134b3a3969b5
 		if (LOG.flag){
 			LOG.info("Logging module loaded.\n");
 		}
@@ -96,6 +110,7 @@ public class main {
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File(ONT_FILE));
 
 		LOG.info("Load completely.\n");
+<<<<<<< HEAD
 
 		long startTime = System.currentTimeMillis();
 
@@ -113,6 +128,25 @@ public class main {
 
 		LOG.info("Program consumes " + during/1000 + "s.");
 
+=======
+		
+		long startTime = System.currentTimeMillis();
+		
+		
+		
+		PatternGeneration patternGeneration = new PatternGeneration(ontology);
+		patternGeneration.doGenerate();
+		
+		long endTime = System.currentTimeMillis();
+		long during = endTime-startTime;
+		
+//		LOG.info("Saving patterns...");
+//		patternGeneration.savePattern();
+//		LOG.info("Completely.");
+		
+		LOG.info("Program consumes " + during/1000 + "s.");
+		
+>>>>>>> adfb44697849e3a750ffd26bb151134b3a3969b5
 //		IRI likeIri = IRI.create("http://danye.me/like");
 //		Literal body1 = new Literal(likeIri, new String[]{"?A", "?B", "?C"});
 //		Literal body2 = new Literal(likeIri, new String[]{"?B", "?C", "?D"});
