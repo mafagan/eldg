@@ -33,7 +33,7 @@ public class main {
 	public static final String url = "jdbc:mysql://localhost/eldg";
 	public static final String user = "root";
 	public static final String password = "1";
-	public static final String ONT_FILE = "ont.owl";
+	public static final String ONT_FILE = "big0.owl";
 
 	public void test() throws OWLOntologyCreationException {
 		File ontFile = new File("test.owl");
@@ -81,27 +81,45 @@ public class main {
 		/* init logging system */
 		LOG.flag = true;
 
-		if (true){
-			String aa = "hei";
-			String bb = "hei";
-			Set<String> tt = new HashSet<String>();
-			tt.add(aa);
-			LOG.info(tt.contains(bb));
+		if (false){
+			/* test data */
+			long startTime = System.currentTimeMillis();
+			for (int i = 0; i < 10000; i++) {
+				LOG.info("heihei");
+			}
+			long endTime = System.currentTimeMillis();
+			LOG.info(endTime-startTime);
 			return;
 		}
-
+		
+		
 		if (LOG.flag){
 			LOG.info("Logging module loaded.\n");
 		}
 
 		LOG.info("Loading TBox...");
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-		manager.setSilentMissingImportsHandling(true);
+		//manager.setSilentMissingImportsHandling(true);
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File(ONT_FILE));
+
 		LOG.info("Load completely.\n");
+		
+		long startTime = System.currentTimeMillis();
+		
+		
+		
 		PatternGeneration patternGeneration = new PatternGeneration(ontology);
 		patternGeneration.doGenerate();
-		patternGeneration.savePattern();
+		
+		long endTime = System.currentTimeMillis();
+		long during = endTime-startTime;
+		
+//		LOG.info("Saving patterns...");
+//		patternGeneration.savePattern();
+//		LOG.info("Completely.");
+		
+		LOG.info("Program consumes " + during/1000 + "s.");
+		
 //		IRI likeIri = IRI.create("http://danye.me/like");
 //		Literal body1 = new Literal(likeIri, new String[]{"?A", "?B", "?C"});
 //		Literal body2 = new Literal(likeIri, new String[]{"?B", "?C", "?D"});
