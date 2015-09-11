@@ -124,6 +124,7 @@ public class PatternGeneration {
     
     /* save pattern immediately */
     private void flushPattern(Set<NormalizedIntegerAxiom> g, int patternId) throws SQLException, FileNotFoundException{
+        LOG.info("Save pattern: " + g);
     	Statement stmt = dbConnection.createStatement();
     	
     	PrintStream out = new PrintStream(TEMP_FILE);
@@ -165,7 +166,7 @@ public class PatternGeneration {
                 RI2Axiom axiom = (RI2Axiom) tmpAxiom;
                 out.println(patternId + "\t" + axiomTypeMap.get(RI2Axiom.class.toString())
                         + "\t" + axiom.getSubProperty() + "\t"
-                        + axiom.getSuperProperty() + "\t"
+                        + axiom.getSuperProperty() + "\t0\t"
                         + support);
             }else if (tmpAxiom instanceof RI3Axiom){
                 RI3Axiom axiom = (RI3Axiom) tmpAxiom;
@@ -176,7 +177,11 @@ public class PatternGeneration {
                         + support);
             }
         }
-    	
+        out.close();
+        stmt.execute("load data local infile '" + TEMP_FILE + "' ignore into table patterns");
+        if (!dbConnection.getAutoCommit())
+            dbConnection.commit();
+
 		stmt.close();
 		(new File(TEMP_FILE)).delete();
     }

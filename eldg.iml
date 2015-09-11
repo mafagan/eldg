@@ -4,6 +4,9 @@
     <libelement value="jar://$MODULE_DIR$/lib/owlapi-bin.jar!/" />
     <libelement value="jar://$MODULE_DIR$/lib/mysql-connector-java-5.1.17-bin.jar!/" />
     <libelement value="jar://$MODULE_DIR$/lib/findj-jcel-bin.jar!/" />
+    <libelement value="file:///home/winter/workspace/eldg/lib/findj-jcel-bin.jar" />
+    <libelement value="file:///home/winter/workspace/eldg/lib/mysql-connector-java-5.1.17-bin.jar" />
+    <libelement value="file:///home/winter/workspace/eldg/lib/owlapi-bin.jar" />
     <src_description expected_position="0">
       <src_folder value="file://$MODULE_DIR$/src" expected_position="0" />
     </src_description>
@@ -17,16 +20,16 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module-library">
-      <library name="owlapi-bin.jar">
+      <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/owlapi-bin.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/findj-jcel-bin.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="mysql-connector-java-5.1.17-bin.jar">
+      <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/mysql-connector-java-5.1.17-bin.jar!/" />
         </CLASSES>
@@ -35,9 +38,9 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="findj-jcel-bin.jar">
+      <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/findj-jcel-bin.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/owlapi-bin.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
