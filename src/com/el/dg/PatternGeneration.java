@@ -1,6 +1,5 @@
 package com.el.dg;
 
-import com.sun.deploy.net.proxy.PACFunctionsImpl;
 import de.tudresden.inf.lat.jcel.coreontology.axiom.*;
 import de.tudresden.inf.lat.jcel.owlapi.main.JcelReasoner;
 import de.tudresden.inf.lat.jcel.owlapi.translator.TranslationRepository;
@@ -8,9 +7,6 @@ import de.tudresden.inf.lat.jcel.reasoner.main.RuleBasedReasoner;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
-import sun.dc.path.PathError;
-import sun.rmi.runtime.Log;
-import sun.tools.jconsole.MaximizableInternalFrame;
 import utils.LOG;
 
 import java.io.File;
@@ -98,8 +94,10 @@ public class PatternGeneration {
 
             addPattern(S_v, g, false);
 
-            if (findSubstitution(g, false)>0)
+            if (findSubstitution(g, false)>0){
+            	flushPattern(g, S.size());
                 addPattern(S, g, false);
+            }
 
 
             if (findSubstitution(g, true)>0){
@@ -123,7 +121,66 @@ public class PatternGeneration {
             diffPattern = a_patternInSetDifference(S_a, S_v);
         }
     }
+    
+    /* save pattern immediately */
+    private void flushPattern(Set<NormalizedIntegerAxiom> g, int patternId) throws SQLException, FileNotFoundException{
+    	Statement stmt = dbConnection.createStatement();
+    	
+    	PrintStream out = new PrintStream(TEMP_FILE);
 
+    	Integer support = supportMap.get(g);
+    	
+    	Iterator<NormalizedIntegerAxiom> patternIt = g.iterator();
+        while (patternIt.hasNext()){
+            NormalizedIntegerAxiom tmpAxiom = patternIt.next();
+
+            if (tmpAxiom instanceof GCI0Axiom){
+                GCI0Axiom axiom = (GCI0Axiom) tmpAxiom;
+                out.println(patternId + "\t" + axiomTypeMap.get(GCI0Axiom.class.toString())
+                        + "\t" + axiom.getSubClass() + "\t"
+                        + axiom.getSuperClass() + "\t0\t"
+                        + support);
+            }else if (tmpAxiom instanceof GCI1Axiom){
+                GCI1Axiom axiom = (GCI1Axiom) tmpAxiom;
+                out.println(patternId + "\t" + axiomTypeMap.get(GCI1Axiom.class.toString())
+                        + "\t" + axiom.getLeftSubClass() + "\t"
+                        + axiom.getRightSubClass() + "\t"
+                        + axiom.getSuperClass() + "\t"
+                        + support);
+            }else if (tmpAxiom instanceof GCI2Axiom){
+                GCI2Axiom axiom = (GCI2Axiom) tmpAxiom;
+                out.println(patternId + "\t" + axiomTypeMap.get(GCI2Axiom.class.toString())
+                        + "\t" + axiom.getSubClass() + "\t"
+                        + axiom.getPropertyInSuperClass() + "\t"
+                        + axiom.getClassInSuperClass() + "\t"
+                        + support);
+            }else if (tmpAxiom instanceof GCI3Axiom){
+                GCI3Axiom axiom = (GCI3Axiom) tmpAxiom;
+                out.println(patternId + "\t" + axiomTypeMap.get(GCI3Axiom.class.toString())
+                        + "\t" + axiom.getPropertyInSubClass() + "\t"
+                        + axiom.getClassInSubClass() + "\t"
+                        + axiom.getSuperClass() + "\t"
+                        + support);
+            }else if (tmpAxiom instanceof RI2Axiom){
+                RI2Axiom axiom = (RI2Axiom) tmpAxiom;
+                out.println(patternId + "\t" + axiomTypeMap.get(RI2Axiom.class.toString())
+                        + "\t" + axiom.getSubProperty() + "\t"
+                        + axiom.getSuperProperty() + "\t"
+                        + support);
+            }else if (tmpAxiom instanceof RI3Axiom){
+                RI3Axiom axiom = (RI3Axiom) tmpAxiom;
+                out.println(patternId + "\t" + axiomTypeMap.get(RI3Axiom.class.toString())
+                        + "\t" + axiom.getLeftSubProperty() + "\t"
+                        + axiom.getRightSubProperty() + "\t"
+                        + axiom.getSuperProperty() + "\t"
+                        + support);
+            }
+        }
+    	
+		stmt.close();
+		(new File(TEMP_FILE)).delete();
+    }
+    
     private void addISubstitution(Set<Set<NormalizedIntegerAxiom>> Sa, Set<NormalizedIntegerAxiom> pattern){
         Set<Integer> classSigSet = getClassSignature(pattern);
         Set<Integer> propertySet = getPropertySignature(pattern);
@@ -533,6 +590,21 @@ public class PatternGeneration {
 
         TBoxCP tcp = new TBoxCP(dbConnection, tbox);
         tcp.generate();
+        
+        Statement stmt = dbConnection.createStatement();
+        String ptable = "(patternId int not null, " +
+                        "axiomType int not null, " +
+                        "fir_node int not null, " +
+                        "sec_node int not null, " +
+                        "third_node int not null, " +
+                        "support int not null)" ;
+
+        stmt.execute("drop table if exists patterns");
+        stmt.execute("create table patterns" + ptable);
+
+        if (!dbConnection.getAutoCommit())
+            dbConnection.commit();
+        stmt.close();
     }
 
     public Set<NormalizedIntegerAxiom> a_patternInSetDifference(Set<Set<NormalizedIntegerAxiom>> Sa, Set<Set<NormalizedIntegerAxiom>> Sv){
