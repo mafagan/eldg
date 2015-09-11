@@ -41,7 +41,7 @@ public class PatternDiagnosis {
         String prefix = "danye://";
         IRI ontologyIRI = IRI.create(prefix);
         OWLOntology ontology = manager.createOntology(ontologyIRI);
-
+        
         Set<OWLAxiom> axioms = new HashSet<OWLAxiom>();
 
         Iterator<NormalizedIntegerAxiom> tboxIt = tbox.iterator();

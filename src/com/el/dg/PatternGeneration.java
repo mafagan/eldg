@@ -508,6 +508,7 @@ public class PatternGeneration {
     private void doPretreatment() throws FileNotFoundException, SQLException, ClassNotFoundException {
         JcelReasoner reasoner = new JcelReasoner(ontology, false);
         RuleBasedReasoner ruleBasedReasoner = (RuleBasedReasoner) reasoner.getReasoner();
+
         TranslationRepository translatorReposity = reasoner.getTranslator().getTranslationRepository();
         classMap = translatorReposity.getClassMap();
         propMap = translatorReposity.getObjectPropertyMap();

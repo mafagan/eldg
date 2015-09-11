@@ -33,7 +33,7 @@ public class main {
 	public static final String url = "jdbc:mysql://localhost/eldg";
 	public static final String user = "root";
 	public static final String password = "1";
-	public static final String ONT_FILE = "ont.owl";
+	public static final String ONT_FILE = "big0.owl";
 
 	public void test() throws OWLOntologyCreationException {
 		File ontFile = new File("test.owl");
@@ -81,7 +81,7 @@ public class main {
 		/* init logging system */
 		LOG.flag = true;
 
-		if (true){
+		if (false){
 			String aa = "hei";
 			String bb = "hei";
 			Set<String> tt = new HashSet<String>();
@@ -98,6 +98,7 @@ public class main {
 		OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 		manager.setSilentMissingImportsHandling(true);
 		OWLOntology ontology = manager.loadOntologyFromOntologyDocument(new File(ONT_FILE));
+
 		LOG.info("Load completely.\n");
 		PatternGeneration patternGeneration = new PatternGeneration(ontology);
 		patternGeneration.doGenerate();
